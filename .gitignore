@@ -25,3 +25,8 @@ dist-ssr
 
 # Backend
 backend/.env
+
+# Frontend env (contains secrets)
+.env
+.env.local
+.env.*.local

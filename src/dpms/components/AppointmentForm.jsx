@@ -3,6 +3,7 @@ import {
   Paper, TextField, Button, Box, Typography,
   Dialog, DialogTitle, DialogContent, DialogActions, Alert
 } from '@mui/material'
+import { toast } from 'sonner'
 import Autocomplete from '@mui/material/Autocomplete'
 import { PersonSearch as PersonSearchIcon } from '@mui/icons-material'
 import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material'
@@ -95,7 +96,7 @@ export default function AppointmentForm({ onCreated }) {
     }
 
     if (!dateTime) {
-      alert('Please select a date and time for the appointment.')
+      toast.error('Please select a date and time for the appointment.')
       setLoading(false)
       return
     }
@@ -106,14 +107,14 @@ export default function AppointmentForm({ onCreated }) {
         date_time: new Date(dateTime).toISOString(),
         therapist
       })
-      alert('Appointment scheduled successfully!')
+      toast.success('Appointment scheduled successfully!')
       setDateTime('')
       setTherapist('')
       setPatientInput('')
       setSelectedPatient(null)
       if (onCreated) onCreated()
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to create appointment')
+      toast.error(err.response?.data?.msg || 'Failed to create appointment')
     } finally {
       setLoading(false)
     }

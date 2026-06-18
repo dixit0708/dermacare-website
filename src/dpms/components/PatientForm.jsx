@@ -3,6 +3,7 @@ import {
   Paper, TextField, Button, MenuItem, Box, Grid, Divider, Typography, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions, Alert
 } from '@mui/material'
+import { toast } from 'sonner'
 import { PersonSearch as PersonSearchIcon } from '@mui/icons-material'
 import { MedicalServices as MedicalServicesIcon } from '@mui/icons-material'
 import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material'
@@ -113,11 +114,11 @@ export default function PatientForm({ mode = 'offline', prefillData = null }) {
     if (!file) return
 
     if (mediaType === 'photo' && !file.type.startsWith('image/')) {
-      alert('Please select an image file.')
+      toast.error('Please select an image file.')
       return
     }
     if (mediaType === 'video' && !file.type.startsWith('video/')) {
-      alert('Please select a video file.')
+      toast.error('Please select a video file.')
       return
     }
 
@@ -126,14 +127,14 @@ export default function PatientForm({ mode = 'offline', prefillData = null }) {
       const uploaded = await uploadCloudinaryMedia(file)
       if (mediaType === 'video') {
         setVideos((v) => [...v, uploaded.url])
-        alert('Video uploaded successfully')
+        toast.success('Video uploaded successfully')
       } else {
         setPhotos((p) => [...p, uploaded.url])
-        alert('Photo uploaded successfully')
+        toast.success('Photo uploaded successfully')
       }
     } catch (err) {
       console.error(err)
-      alert(err.message || 'Upload error')
+      toast.error(err.message || 'Upload error')
     } finally {
       setLoading(false)
     }
@@ -142,11 +143,11 @@ export default function PatientForm({ mode = 'offline', prefillData = null }) {
   const submit = async (e) => {
     e.preventDefault()
     if (!form.full_name || !form.whatsapp || !form.age || !form.gender || !form.treatment) {
-      alert('Full name, WhatsApp, Age, Gender and Treatment are required fields.')
+      toast.error('Full name, WhatsApp, Age, Gender and Treatment are required fields.')
       return
     }
     if (isOnline && (!form.payment_datetime || !form.amount_paid)) {
-      alert('Payment Date/Time and Amount Paid are required for online patients.')
+      toast.error('Payment Date/Time and Amount Paid are required for online patients.')
       return
     }
     try {
@@ -176,10 +177,10 @@ export default function PatientForm({ mode = 'offline', prefillData = null }) {
       const data = err.response?.data
       // Duplicate patient — show friendly dialog
       if (err.response?.status === 409 && data?.duplicate) {
-        setDupDialog({ open: true, patientId: data.patient_id, name: form.full_name })
-        return
+        setDuplicateInfo({ msg: data.msg, patient_id: data.patient_id })
+      } else {
+        toast.error(data?.msg || 'Create failed: ' + err.message)
       }
-      alert(data?.msg || 'Create failed: ' + err.message)
     }
   }
 

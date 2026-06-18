@@ -53,11 +53,11 @@ export default function VisitForm({ open, onClose, patientId, onCreated }) {
     if (!file) return
 
     if (mediaType === 'photo' && !file.type.startsWith('image/')) {
-      alert('Please select an image file.')
+      toast.error('Please select an image file.')
       return
     }
     if (mediaType === 'video' && !file.type.startsWith('video/')) {
-      alert('Please select a video file.')
+      toast.error('Please select a video file.')
       return
     }
 
@@ -66,14 +66,14 @@ export default function VisitForm({ open, onClose, patientId, onCreated }) {
       const uploaded = await uploadCloudinaryMedia(file)
       if (mediaType === 'video') {
         setVisit((v) => ({ ...v, videos: [...(v.videos || []), uploaded.url] }))
-        alert('Video uploaded successfully')
+        toast.success('Video uploaded successfully')
       } else {
         setVisit((v) => ({ ...v, photos: [...v.photos, uploaded.url] }))
-        alert('Photo uploaded successfully')
+        toast.success('Photo uploaded successfully')
       }
     } catch (err) {
       console.error(err)
-      alert(err.message || 'Upload error')
+      toast.error(err.message || 'Upload error')
     } finally {
       setUploading(false)
     }
@@ -83,10 +83,11 @@ export default function VisitForm({ open, onClose, patientId, onCreated }) {
     try {
       const payload = { visit }
       await api.put(`/api/patients/${patientId}`, payload)
+      toast.success('Visit added successfully')
       if (onCreated) onCreated()
       onClose()
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to add visit')
+      toast.error(err.response?.data?.msg || 'Failed to add visit')
     }
   }
 

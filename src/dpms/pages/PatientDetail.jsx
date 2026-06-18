@@ -248,6 +248,19 @@ export default function PatientDetail() {
         } catch (e) {}
       }
 
+      // ── Fire post-visit notification (thank you + next visit date) ──
+      try {
+        await api.post('/api/notify/post-visit', {
+          phone:      patient?.whatsapp || '',
+          email:      patient?.email    || null,
+          name:       patient?.full_name || '',
+          treatment:  newVisit.treatment,
+          next_visit: newVisit.next_visit || null,
+        })
+      } catch (notifyErr) {
+        console.warn('Post-visit notification failed (non-critical):', notifyErr)
+      }
+
       setSuccessMessage('Visit added successfully! Confirmation sent to patient.')
       setNewVisit(emptyNewVisit)
       setSelectedMedicines([])
@@ -262,6 +275,7 @@ export default function PatientDetail() {
       setSubmitting(false)
     }
   }
+
 
   const removePhotoFromNewVisit = (idx) => {
     setNewVisit(v => ({ ...v, photos: v.photos.filter((_, i) => i !== idx) }))
