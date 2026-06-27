@@ -544,13 +544,23 @@ async def notify_post_visit(payload: PostVisitNotify):
 
 # ── DPMS Appointments (read / update from dpms.appointments) ─────────
 @api_router.get("/appointments")
-async def get_all_appointments(authorization: Optional[str] = Header(default=None)):
+async def get_all_appointments(
+    source: Optional[str] = None,
+    patient_id: Optional[str] = None,
+    authorization: Optional[str] = Header(default=None)
+):
     _verify_jwt(authorization)
+    query = {}
+    if source:
+        query["source"] = source
+    if patient_id:
+        query["patient_id"] = patient_id
+        
     appts = []
-    async for a in db.appointments.find().sort("created_at", -1):
+    async for a in dpms_db.appointments.find(query).sort("created_at", -1).limit(200):
         a["_id"] = str(a["_id"])
         appts.append(a)
-    return appts
+    return {"items": appts}
 
 @api_router.put("/appointments/{appt_id}")
 async def update_dpms_appointment(
@@ -576,13 +586,30 @@ async def update_dpms_appointment(
 
 # ── DPMS Patients ─────────
 @api_router.get("/patients")
-async def get_patients(authorization: Optional[str] = Header(default=None)):
+async def get_patients(
+    patient_type: Optional[str] = None,
+    name: Optional[str] = None,
+    whatsapp: Optional[str] = None,
+    patient_id: Optional[str] = None,
+    authorization: Optional[str] = Header(default=None)
+):
     _verify_jwt(authorization)
+    
+    query = {}
+    if patient_type:
+        query["patient_type"] = patient_type
+    if name:
+        query["full_name"] = {"$regex": name, "$options": "i"}
+    if whatsapp:
+        query["whatsapp"] = {"$regex": whatsapp}
+    if patient_id:
+        query["patient_id"] = {"$regex": patient_id, "$options": "i"}
+
     patients = []
-    async for p in dpms_db.patients.find():
+    async for p in dpms_db.patients.find(query).sort("created_at", -1).limit(100):
         p["_id"] = str(p["_id"])
         patients.append(p)
-    return patients
+    return {"items": patients}
 
 @api_router.post("/patients")
 async def create_patient(payload: PatientCreate, authorization: Optional[str] = Header(default=None)):

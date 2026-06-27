@@ -413,7 +413,7 @@ export default function PatientDetail() {
                     {visits.length <= 1 ? (
                       <Typography variant="body2" sx={{ color: 'gray' }}>No previous visits recorded yet</Typography>
                     ) : (
-                      visits.slice(0, visits.length - 1).map((v, idx) => (
+                      visits.slice(1).map((v, idx) => (
                         <Box key={idx} sx={{ mb: 2, pb: 1, borderBottom: idx < visits.length - 2 ? '1px solid #eee' : 'none' }}>
                           <Typography><strong>{dayjs(v.date_of_visit).format('DD MMM YYYY, h:mm A')}</strong></Typography>
                           <Typography variant="body2" sx={{ color: 'primary.main' }}>{v.treatment}</Typography>
@@ -471,7 +471,7 @@ export default function PatientDetail() {
                 {visits.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'gray' }}>No visits recorded yet</Typography>
                 ) : (
-                  [visits[visits.length - 1]].map((v, idx) => (
+                  [visits[0]].map((v, idx) => (
                     <Box key={idx} sx={{ py: 2 }}>
                       <Typography><strong>{dayjs(v.date_of_visit).format('DD MMM YYYY, h:mm A')}</strong></Typography>
                       <Typography variant="body2" sx={{ color: 'primary.main' }}>{v.treatment}</Typography>

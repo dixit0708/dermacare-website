@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 
-const BACKEND_URL = "http://localhost:8000"; // fallback if env is missing
+const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const API = `${BACKEND_URL}/api`;
 
 const PHONE = "7579781961";
@@ -592,7 +592,14 @@ function BookingSection() {
       toast.success("Your appointment has been booked successfully.");
       setFormData({ full_name: "", phone: "", email: "", age: "", gender: "", address: "", consultation_type: "online", treatment: "", preferred_date: "", message: "" });
     } catch (err) {
-      toast.error("Failed to send request. Please call us directly.");
+      console.error(err);
+      if (err.response?.data?.detail) {
+        const details = err.response.data.detail;
+        const msg = Array.isArray(details) ? details.map(d => `${d.loc?.[1] || 'Field'}: ${d.msg}`).join(', ') : err.response.data.detail;
+        toast.error(`Error: ${msg}`);
+      } else {
+        toast.error("Failed to send request. Please call us directly.");
+      }
     } finally {
       setLoading(false);
     }
