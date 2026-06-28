@@ -738,7 +738,7 @@ async def get_medicines(authorization: Optional[str] = Header(default=None)):
     async for m in dpms_db.medicines.find():
         m["_id"] = str(m["_id"])
         meds.append(m)
-    return meds
+    return {"medicines": meds}
 
 @api_router.post("/medicines")
 async def create_medicine(payload: MedicineCreate, authorization: Optional[str] = Header(default=None)):

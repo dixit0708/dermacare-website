@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "start:all": "concurrently -n \"WEB,API,DPMS\" -c \"cyan,magenta,yellow\" \"npm run dev\" \"cd backend && python -m uvicorn server:app --reload --port 8000\" \"cd ../DPMS-updated/backend && python app.py\"",
+    "start:all": "concurrently -n \"WEB,API\" -c \"cyan,magenta\" \"npm run dev\" \"cd backend && python -m uvicorn server:app --reload --port 8000\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
