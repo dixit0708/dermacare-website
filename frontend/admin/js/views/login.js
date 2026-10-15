@@ -4,6 +4,18 @@
 import api from "../api.js";
 import { login } from "../auth.js";
 import { navigate } from "../router.js";
+import { esc } from "../escape.js";
+
+// FastAPI sends errors as {"detail": {"msg": ...}} or {"detail": "..."}
+function errorMessage(err, fallback) {
+  if (!err.response) return "Can't reach the server. Is the backend running?";
+  const data = err.response.data || {};
+  const detail = data.detail;
+  if (detail && typeof detail === "object" && !Array.isArray(detail) && detail.msg) return detail.msg;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
+  return data.msg || fallback;
+}
 
 const STYLE = `
 .login-page { min-height: 100vh; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -88,6 +100,7 @@ export function render(container) {
               ${field({ id: "su-username", label: "Username", icon: "\u{1F464}" })}
               ${field({ id: "su-password", label: "Password", type: "password", icon: "\u{1F512}", toggle: true })}
               ${field({ id: "su-confirm", label: "Confirm Password", type: "password", icon: "\u{1F512}" })}
+              ${field({ id: "su-code", label: "Clinic Signup Code", type: "password", icon: "\u{1F511}" })}
               <div id="signup-error"></div>
               <div id="signup-success"></div>
               <button type="submit" class="login-submit">Create Doctor Account</button>
@@ -140,8 +153,8 @@ export function render(container) {
       login(res.data.access_token);
       navigate("/admin/");
     } catch (err) {
-      const msg = err.response?.data?.msg || "Login failed";
-      signinError.innerHTML = `<div class="login-alert login-alert-error">${msg}</div>`;
+      const msg = errorMessage(err, "Login failed");
+      signinError.innerHTML = `<div class="login-alert login-alert-error">${esc(msg)}</div>`;
     }
   });
 
@@ -154,6 +167,7 @@ export function render(container) {
     const regUsername = page.querySelector("#su-username").value;
     const regPassword = page.querySelector("#su-password").value;
     const regConfirm = page.querySelector("#su-confirm").value;
+    const regCode = page.querySelector("#su-code").value;
 
     if (regPassword !== regConfirm) {
       signupError.innerHTML = `<div class="login-alert login-alert-error">Passwords do not match</div>`;
@@ -169,13 +183,13 @@ export function render(container) {
         username: regUsername,
         password: regPassword,
         full_name: regName,
-        role: "Doctor",
+        signup_code: regCode,
       });
       signupSuccess.innerHTML = `<div class="login-alert login-alert-success">Account created successfully! You can now sign in.</div>`;
       page.querySelector("#signup-form").reset();
     } catch (err) {
-      const msg = err.response?.data?.msg || "Registration failed";
-      signupError.innerHTML = `<div class="login-alert login-alert-error">${msg}</div>`;
+      const msg = errorMessage(err, "Registration failed");
+      signupError.innerHTML = `<div class="login-alert login-alert-error">${esc(msg)}</div>`;
     }
   });
 }

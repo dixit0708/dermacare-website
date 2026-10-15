@@ -9,10 +9,15 @@ load_dotenv(ROOT_DIR / 'backend' / '.env') # Also load backend .env if any
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'dermacare_db')
 
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "dermacare-admin-2025")
-JWT_SECRET  = os.environ.get("JWT_SECRET",  "dermacare-jwt-secret-2025")
+# No default: a secret written in the code is public, and anyone holding it can forge logins.
+JWT_SECRET = os.environ.get("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET is not set. Add it to backend/.env")
 JWT_ALGORITHM   = "HS256"
 JWT_EXPIRE_HOURS = 24
+
+# Code a new doctor must enter to create an account. If unset, sign-up is closed.
+SIGNUP_CODE = os.environ.get("SIGNUP_CODE", "")
 
 SMTP_HOST     = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT     = int(os.environ.get("SMTP_PORT", 587))

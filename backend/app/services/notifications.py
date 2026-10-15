@@ -73,13 +73,14 @@ async def send_post_visit_notifications(phone: str, email: str, name: str, treat
         sms_msg += f" Your next visit is scheduled for {friendly_date}."
     await send_sms_raw(phone, sms_msg)
 
-    next_visit_html = f"<p>Your next visit is scheduled for <strong>{friendly_date}</strong>.</p>" if friendly_date else ""
-    html = f"""
+    e = html.escape
+    next_visit_html = f"<p>Your next visit is scheduled for <strong>{e(friendly_date)}</strong>.</p>" if friendly_date else ""
+    body_html = f"""
     <div style="font-family:sans-serif;padding:20px;">
       <h2>Thank You for Visiting DermaCare</h2>
-      <p>Dear {name},</p>
-      <p>Thank you for visiting us for your <strong>{treatment}</strong> session.</p>
+      <p>Dear {e(name)},</p>
+      <p>Thank you for visiting us for your <strong>{e(treatment)}</strong> session.</p>
       {next_visit_html}
     </div>
     """
-    await send_email_raw(email, "Thank You for Visiting - DermaCare", html)
+    await send_email_raw(email, "Thank You for Visiting - DermaCare", body_html)

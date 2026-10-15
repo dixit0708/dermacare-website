@@ -1,12 +1,13 @@
 import logging
 import os
-from fastapi import FastAPI, APIRouter
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, APIRouter, Request
+from fastapi.responses import FileResponse, JSONResponse
+from pymongo.errors import ConnectionFailure
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.services.scheduler import setup_scheduler
+from app.database import db, dpms_db
 from app.routes import auth, patients, appointments, medicines
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
@@ -20,13 +21,25 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    scheduler = setup_scheduler()
+    # Unique indexes stop two patients/users from ever getting the same ID or
+    # username. Failing here (e.g. DB unreachable) shouldn't block startup.
+    try:
+        await dpms_db.patients.create_index("patient_id", unique=True)
+        await db.users.create_index("username", unique=True)
+    except Exception as e:
+        logger.warning(f"Could not create indexes: {e}")
     yield
-    # Shutdown
-    scheduler.shutdown()
 
 app = FastAPI(title="DermaCare API", lifespan=lifespan)
+
+
+@app.exception_handler(ConnectionFailure)
+async def db_unreachable(request: Request, exc: ConnectionFailure):
+    logger.error(f"Database unreachable: {exc}")
+    return JSONResponse(
+        status_code=503,
+        content={"detail": {"msg": "Can't reach the database. Check MongoDB Atlas Network Access (IP allowlist)."}},
+    )
 
 # CORS config
 app.add_middleware(

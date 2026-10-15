@@ -28,14 +28,18 @@ async function request(method, path, { params, data } = {}) {
 
   const res = await fetch(buildUrl(path, params), { method, headers, body });
 
-  if (res.status === 401) {
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+
+  // An expired/invalid session sends the user back to login. A wrong password on
+  // the login form itself is also a 401, but that must just show the error.
+  if (res.status === 401 && !path.startsWith("/api/auth/")) {
     sessionStorage.removeItem("access_token");
     window.location.href = "/admin";
-    throw new ApiError(401, null);
+    throw new ApiError(401, json);
   }
 
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
   if (!res.ok) throw new ApiError(res.status, json);
   return { data: json, status: res.status };
 }

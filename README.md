@@ -12,7 +12,7 @@ managing patients, consultations, medicines and appointments.
 backend/
   server.py        FastAPI app, also serves the frontend
   app/routes/      auth, patients, appointments, medicines APIs
-  app/services/    email, SMS and reminder scheduler
+  app/services/    email and SMS notifications
 frontend/
   index.html       public website
   admin/           DPMS admin panel (served at /admin)
@@ -21,8 +21,12 @@ frontend/
 
 ## Running locally
 
-1. Create `backend/.env` with at least `MONGO_URL`, `DB_NAME` and `JWT_SECRET`.
-   Optional: `ADMIN_TOKEN`, `SMTP_*` for email, `MSG91_*` for SMS.
+1. Create `backend/.env` with at least `MONGO_URL`, `DB_NAME` and `JWT_SECRET`
+   (the server refuses to start without `JWT_SECRET`).
+   Optional: `SIGNUP_CODE` (code a doctor must enter to sign up; sign-up is closed
+   if it's not set), `SMTP_*` for email, `MSG91_*` for SMS.
+   New accounts are always "Doctor". To make someone an Admin (who can delete
+   patients), set `role: "Admin"` on their document in the `users` collection.
 2. Install and start the backend:
 
    ```

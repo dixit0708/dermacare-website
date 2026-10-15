@@ -1,6 +1,14 @@
 // Medicines catalog dialog. A fresh overlay is built every time it opens.
 
 import api from "../api.js";
+import { esc } from "../escape.js";
+
+// FastAPI puts error text under "detail" (a string or {msg}).
+function apiErrorMsg(err, fallback) {
+  const detail = err.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  return detail?.msg || fallback;
+}
 
 function closeOverlay(overlay) {
   overlay.remove();
@@ -50,7 +58,7 @@ export function openMedicinesPanel() {
   });
 
   function showAlert(type, msg) {
-    alertBox.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    alertBox.innerHTML = `<div class="alert alert-${type}">${esc(msg)}</div>`;
     if (type === "success") {
       setTimeout(() => { alertBox.innerHTML = ""; }, 3000);
     }
@@ -76,9 +84,9 @@ export function openMedicinesPanel() {
     medicines.forEach((m) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${m.name}</td>
+        <td>${esc(m.name)}</td>
         <td style="text-align:right;">₹${Number(m.price).toFixed(2)}</td>
-        <td>${m.description || "-"}</td>
+        <td>${esc(m.description || "-")}</td>
         <td style="text-align:center;">
           <button type="button" class="btn btn-ghost btn-sm meds-edit-btn">Edit</button>
           <button type="button" class="btn btn-danger btn-sm meds-delete-btn">Delete</button>
@@ -105,15 +113,15 @@ export function openMedicinesPanel() {
           <div id="meds-form-error"></div>
           <div class="field">
             <label class="field-label">Medicine Name</label>
-            <input class="input" id="meds-form-name" value="${form.name}" autofocus />
+            <input class="input" id="meds-form-name" value="${esc(form.name)}" autofocus />
           </div>
           <div class="field">
             <label class="field-label">Price (₹)</label>
-            <input class="input" id="meds-form-price" type="number" step="0.01" min="0" value="${form.price}" />
+            <input class="input" id="meds-form-price" type="number" step="0.01" min="0" value="${esc(form.price)}" />
           </div>
           <div class="field">
             <label class="field-label">Description</label>
-            <textarea class="textarea" id="meds-form-desc" rows="2">${form.description}</textarea>
+            <textarea class="textarea" id="meds-form-desc" rows="2">${esc(form.description)}</textarea>
           </div>
         </div>
         <div class="dialog-actions">
@@ -152,7 +160,7 @@ export function openMedicinesPanel() {
         formOverlay.remove();
         fetchMedicines();
       } catch (err) {
-        formError.innerHTML = `<div class="alert alert-error">${err.response?.data?.msg || "Failed to save medicine"}</div>`;
+        formError.innerHTML = `<div class="alert alert-error">${esc(apiErrorMsg(err, "Failed to save medicine"))}</div>`;
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = "Save";
@@ -167,7 +175,7 @@ export function openMedicinesPanel() {
       showAlert("success", "Medicine deleted successfully");
       fetchMedicines();
     } catch (err) {
-      showAlert("error", err.response?.data?.msg || "Failed to delete medicine");
+      showAlert("error", apiErrorMsg(err, "Failed to delete medicine"));
     }
   }
 

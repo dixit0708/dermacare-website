@@ -2,6 +2,7 @@
 
 import api from "../api.js";
 import { navigate } from "../router.js";
+import { esc } from "../escape.js";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -72,22 +73,22 @@ export function render(container) {
             : `<span class="chip" style="border:1px solid var(--secondary);color:var(--secondary);background:transparent;">Online Consultation</span>`;
 
           return `
-            <tr data-id="${appt._id}">
+            <tr data-id="${esc(appt._id)}">
               <td>
                 <div>${formatDate(appt.created_at)}</div>
                 <div class="text-muted" style="font-size:0.75rem;">${formatTime(appt.created_at)}</div>
               </td>
               <td>
-                <div style="font-weight:600;">${appt.patient_name || "Unknown"}</div>
-                <div class="text-muted" style="font-size:0.75rem;">${appt.age ? `${appt.age}y` : ""} ${appt.gender ? `• ${appt.gender}` : ""}</div>
+                <div style="font-weight:600;">${esc(appt.patient_name || "Unknown")}</div>
+                <div class="text-muted" style="font-size:0.75rem;">${appt.age ? `${esc(appt.age)}y` : ""} ${appt.gender ? `• ${esc(appt.gender)}` : ""}</div>
               </td>
               <td>
-                <div>${appt.phone || "-"}</div>
-                <div class="text-muted" style="font-size:0.75rem;">${appt.email || "-"}</div>
+                <div>${esc(appt.phone || "-")}</div>
+                <div class="text-muted" style="font-size:0.75rem;">${esc(appt.email || "-")}</div>
               </td>
               <td>${dateTimeCell}</td>
               <td>${typeChip}</td>
-              <td><span class="chip ${statusChipClass(appt.status)}">${appt.status || "New"}</span></td>
+              <td><span class="chip ${statusChipClass(appt.status)}">${esc(appt.status || "New")}</span></td>
               <td style="text-align:right;">
                 <div class="flex gap-2" style="justify-content:flex-end;">
                   <button type="button" class="btn btn-primary btn-sm wa-start-btn" style="background:linear-gradient(135deg, #3b82f6, #2563eb);">▶ Start</button>

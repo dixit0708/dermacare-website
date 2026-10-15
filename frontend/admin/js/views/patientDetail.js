@@ -217,7 +217,9 @@ export function render(container, params, state) {
   // actions
   async function save() {
     try {
-      await api.put(`/api/patients/${patient_id}`, form);
+      // The edit box already shows current issues merged into medical history,
+      // so clear current_issues to stop them being merged in a second time.
+      await api.put(`/api/patients/${patient_id}`, { ...form, current_issues: '' });
       editing = false;
       renderPanel();
       loadPatient();

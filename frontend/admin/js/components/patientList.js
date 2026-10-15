@@ -2,6 +2,7 @@
 
 import api from "../api.js";
 import { navigate } from "../router.js";
+import { esc } from "../escape.js";
 
 export function render(container, { patientType = "offline" } = {}) {
   const isOnline = patientType === "online";
@@ -87,7 +88,7 @@ export function render(container, { patientType = "offline" } = {}) {
         const latestVisit = getLatestVisit(p);
         const dispatchStatus = getDispatchStatus(p);
         const amountCell = isOnline
-          ? `<td>${latestVisit?.amount_paid ? `<strong>₹${latestVisit.amount_paid}</strong>` : `<span style="color:#94a3b8;">—</span>`}</td>`
+          ? `<td>${latestVisit?.amount_paid ? `<strong>₹${esc(latestVisit.amount_paid)}</strong>` : `<span style="color:#94a3b8;">—</span>`}</td>`
           : "";
         const dispatchCell = isOnline
           ? `<td>${dispatchStatus === "dispatched"
@@ -95,13 +96,13 @@ export function render(container, { patientType = "offline" } = {}) {
               : `<span class="chip chip-warning">⏳ Pending</span>`}</td>`
           : "";
         return `
-          <tr data-patient-id="${p.patient_id}">
-            <td><strong>${p.patient_id}</strong></td>
-            <td>${p.full_name || ""}</td>
-            <td>${p.whatsapp || ""}</td>
-            <td>${p.age || "-"}</td>
-            <td>${p.gender || "-"}</td>
-            <td>${getTreatment(p)}</td>
+          <tr data-patient-id="${esc(p.patient_id)}">
+            <td><strong>${esc(p.patient_id)}</strong></td>
+            <td>${esc(p.full_name)}</td>
+            <td>${esc(p.whatsapp)}</td>
+            <td>${esc(p.age || "-")}</td>
+            <td>${esc(p.gender || "-")}</td>
+            <td>${esc(getTreatment(p))}</td>
             ${amountCell}
             ${dispatchCell}
             <td>

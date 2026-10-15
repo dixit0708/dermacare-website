@@ -1,45 +1,18 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Header, Request, Query
-from typing import Optional, List
-from datetime import datetime, timezone, timedelta
-import asyncio
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from typing import Optional
+from datetime import datetime, timezone
 import re
-import uuid
-import jwt
-import bcrypt
 from bson import ObjectId
 
 from app.database import db, dpms_db
-from app.config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_HOURS, ADMIN_TOKEN
-from app.models import *
-from app.services.email import send_email_raw
-from app.services.sms import send_sms_raw
+from app.models import Appointment, AppointmentCreate, AppointmentUpdate, PostVisitNotify
+from app.security import get_current_user
 from app.services.notifications import send_booking_notifications, send_post_visit_notifications
-
 
 
 router = APIRouter()
 
-def _fmt_date(dt_str: str) -> str:
-    if not dt_str or dt_str == "Pending":
-        return "To be confirmed"
-    try:
-        dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-        return dt.strftime("%d %b %Y")
-    except Exception:
-        return dt_str
-
-def _verify_jwt(token: str):
-    if not token or not token.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid token")
-    token_str = token.split(" ")[1]
-    try:
-        payload = jwt.decode(token_str, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
+# Public: called by the booking form on the website, so no login here.
 @router.post("/appointments", response_model=Appointment)
 async def create_appointment(payload: AppointmentCreate, background_tasks: BackgroundTasks):
     appt = Appointment(**payload.model_dump())
@@ -99,62 +72,55 @@ async def create_appointment(payload: AppointmentCreate, background_tasks: Backg
 
 
 # Post-visit notification endpoint
-@router.post("/notify/post-visit")
-async def notify_post_visit(payload: PostVisitNotify):
+@router.post("/notify/post-visit", dependencies=[Depends(get_current_user)])
+async def notify_post_visit(payload: PostVisitNotify, background_tasks: BackgroundTasks):
     """
     Called by the DPMS frontend after a consultation is saved.
     Sends a thank-you SMS + email with the next visit date.
     """
-    asyncio.create_task(send_post_visit_notifications(
+    background_tasks.add_task(
+        send_post_visit_notifications,
         phone=payload.phone,
         email=payload.email,
         name=payload.name,
         treatment=payload.treatment,
         next_visit=payload.next_visit or "",
-    ))
+    )
     return {"ok": True, "msg": "Post-visit notification queued"}
 
 
 # DPMS Appointments (read / update from dpms.appointments)
-@router.get("/appointments")
+@router.get("/appointments", dependencies=[Depends(get_current_user)])
 async def get_all_appointments(
     source: Optional[str] = None,
     patient_id: Optional[str] = None,
-    authorization: Optional[str] = Header(default=None)
 ):
-    _verify_jwt(authorization)
     query = {}
     if source:
         query["source"] = source
     if patient_id:
         query["patient_id"] = patient_id
-        
+
     appts = []
     async for a in dpms_db.appointments.find(query).sort("created_at", -1).limit(200):
         a["_id"] = str(a["_id"])
         appts.append(a)
     return {"items": appts}
 
-@router.put("/appointments/{appt_id}")
-async def update_dpms_appointment(
-    appt_id: str,
-    body: dict,
-    authorization: Optional[str] = Header(default=None),
-):
-    """Update status of a DPMS appointment by _id string."""
-    from bson import ObjectId
-    try:
-        oid = ObjectId(appt_id)
-    except Exception:
+@router.put("/appointments/{appt_id}", dependencies=[Depends(get_current_user)])
+async def update_dpms_appointment(appt_id: str, payload: AppointmentUpdate):
+    """Update status / linked patient of a DPMS appointment by _id string."""
+    if not ObjectId.is_valid(appt_id):
         raise HTTPException(status_code=400, detail="Invalid appointment id")
 
+    data = payload.model_dump(exclude_unset=True)
+    if not data:
+        return {"ok": True}
+
     result = await dpms_db.appointments.update_one(
-        {"_id": oid},
-        {"$set": body},
+        {"_id": ObjectId(appt_id)},
+        {"$set": data},
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"ok": True}
-
-
-# DPMS Patients

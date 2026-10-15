@@ -5,6 +5,7 @@ import api from "../api.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { uploadCloudinaryMedia } from "../cloudinaryUpload.js";
+import { esc } from "../escape.js";
 
 const GENDERS = ["Male", "Female", "Other"];
 
@@ -372,7 +373,7 @@ export function render(container, { mode = "offline", prefillData = null } = {})
             <div class="flex gap-2" style="flex-wrap:wrap;">
               ${selectedBloodTests
                 .map(
-                  (t, i) => `<span class="chip" data-remove-idx="${i}" style="background:#1d4ed8;color:#fff;cursor:pointer;">${t} ✕</span>`
+                  (t, i) => `<span class="chip" data-remove-idx="${i}" style="background:#1d4ed8;color:#fff;cursor:pointer;">${esc(t)} ✕</span>`
                 )
                 .join("")}
             </div>
@@ -397,7 +398,7 @@ export function render(container, { mode = "offline", prefillData = null } = {})
               ${cat.tests
                 .map((test) => {
                   const isSelected = selectedBloodTests.includes(test);
-                  return `<span class="chip" data-test="${test}" style="cursor:pointer;border:1px solid ${cat.color};color:${isSelected ? "#fff" : cat.color};background:${isSelected ? cat.color : "transparent"};font-weight:${isSelected ? 700 : 400};">${test}</span>`;
+                  return `<span class="chip" data-test="${esc(test)}" style="cursor:pointer;border:1px solid ${cat.color};color:${isSelected ? "#fff" : cat.color};background:${isSelected ? cat.color : "transparent"};font-weight:${isSelected ? 700 : 400};">${esc(test)}</span>`;
                 })
                 .join("")}
             </div>
@@ -434,8 +435,8 @@ export function render(container, { mode = "offline", prefillData = null } = {})
   const photosPreview = el("#pf-photos-preview");
   const videosPreview = el("#pf-videos-preview");
   function renderMedia() {
-    photosPreview.innerHTML = photos.map((p) => `<div style="width:80px;height:80px;background-image:url('${p}');background-size:cover;background-position:center;border-radius:6px;"></div>`).join("");
-    videosPreview.innerHTML = videos.map((v) => `<div style="width:140px;height:90px;border-radius:6px;overflow:hidden;border:1px solid var(--border);background:#0f172a;"><video src="${v}" controls muted preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video></div>`).join("");
+    photosPreview.innerHTML = photos.map((p) => `<div style="width:80px;height:80px;background-image:url('${esc(p)}');background-size:cover;background-position:center;border-radius:6px;"></div>`).join("");
+    videosPreview.innerHTML = videos.map((v) => `<div style="width:140px;height:90px;border-radius:6px;overflow:hidden;border:1px solid var(--border);background:#0f172a;"><video src="${esc(v)}" controls muted preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block;"></video></div>`).join("");
   }
 
   async function handleMediaFile(inputEl, mediaType) {
@@ -490,7 +491,7 @@ export function render(container, { mode = "offline", prefillData = null } = {})
       const res = await api.get("/api/medicines");
       medicines = res.data.medicines || [];
       medsSelect.innerHTML = `<option value="">Select a medicine</option>` +
-        medicines.map((m) => `<option value="${m._id}">${m.name} (₹${Number(m.price).toFixed(2)})</option>`).join("");
+        medicines.map((m) => `<option value="${esc(m._id)}">${esc(m.name)} (₹${Number(m.price).toFixed(2)})</option>`).join("");
     } catch (err) {
       medsError = "Failed to fetch medicines";
       renderMedsAlert();
@@ -530,8 +531,8 @@ export function render(container, { mode = "offline", prefillData = null } = {})
             (m) => `
           <div class="flex justify-between items-center mb-2">
             <div class="flex items-center gap-2">
-              <button type="button" class="btn-ghost" data-remove-med="${m._id}" style="border:none;background:none;color:var(--danger);cursor:pointer;">✕</button>
-              <span>${m.name} — ₹${Number(m.price).toFixed(2)}</span>
+              <button type="button" class="btn-ghost" data-remove-med="${esc(m._id)}" style="border:none;background:none;color:var(--danger);cursor:pointer;">✕</button>
+              <span>${esc(m.name)} — ₹${Number(m.price).toFixed(2)}</span>
             </div>
           </div>`
           )
@@ -565,8 +566,8 @@ export function render(container, { mode = "offline", prefillData = null } = {})
         </div>
         <div style="background:#f8fafc;border-radius:8px;padding:16px;border:1px solid var(--border);">
           <div style="color:#64748b;text-transform:uppercase;letter-spacing:1px;font-size:0.7rem;">Existing Record</div>
-          <div style="font-weight:700;color:#0f172a;margin-top:4px;">${name}</div>
-          <div style="color:#6366F1;font-family:monospace;margin-top:2px;">ID: ${patientId}</div>
+          <div style="font-weight:700;color:#0f172a;margin-top:4px;">${esc(name)}</div>
+          <div style="color:#6366F1;font-family:monospace;margin-top:2px;">ID: ${esc(patientId)}</div>
         </div>
       `,
       actionsHtml: `
@@ -595,8 +596,8 @@ export function render(container, { mode = "offline", prefillData = null } = {})
         </div>
         <div style="background:#f8fafc;border-radius:8px;padding:16px;border:1px solid var(--border);">
           <div style="color:#64748b;text-transform:uppercase;letter-spacing:1px;font-size:0.7rem;">New Patient Record</div>
-          <div style="font-weight:700;color:#0f172a;margin-top:4px;">${name}</div>
-          <div style="color:#6366F1;font-family:monospace;margin-top:2px;">Patient ID: ${patientId}</div>
+          <div style="font-weight:700;color:#0f172a;margin-top:4px;">${esc(name)}</div>
+          <div style="color:#6366F1;font-family:monospace;margin-top:2px;">Patient ID: ${esc(patientId)}</div>
         </div>
       `,
       actionsHtml: `

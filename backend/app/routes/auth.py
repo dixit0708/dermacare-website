@@ -1,32 +1,38 @@
-from fastapi import APIRouter, HTTPException, Header
-from typing import Optional, List
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
 import bcrypt
+import hmac
 import jwt
 from datetime import datetime, timezone, timedelta
 import uuid
 
 from app.database import db
-from app.config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_HOURS, ADMIN_TOKEN
+from app.config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_HOURS, SIGNUP_CODE
 from app.models import UserRegister, UserLogin
 
 router = APIRouter()
 
 @router.post("/auth/register")
 async def register(payload: UserRegister):
+    if not SIGNUP_CODE:
+        raise HTTPException(status_code=403, detail={"msg": "Sign-up is closed. Ask the clinic admin to create your account."})
+    # compare_digest avoids leaking how many characters matched through response timing
+    if not hmac.compare_digest(payload.signup_code, SIGNUP_CODE):
+        raise HTTPException(status_code=403, detail={"msg": "Invalid clinic signup code"})
+
     existing = await db.users.find_one({"username": payload.username})
     if existing:
         raise HTTPException(status_code=409, detail={"msg": "Username already taken"})
-    
+
     hashed = bcrypt.hashpw(payload.password.encode(), bcrypt.gensalt()).decode()
     user_id = str(uuid.uuid4())
-    
+
     user_doc = {
         "id": user_id,
         "username": payload.username,
         "password_hash": hashed,
         "full_name": payload.full_name,
-        "role": payload.role,
+        # Never taken from the request; an Admin is promoted directly in the database.
+        "role": "Doctor",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
@@ -39,7 +45,7 @@ async def login(payload: UserLogin):
         raise HTTPException(status_code=401, detail={"msg": "Invalid username or password"})
     if not bcrypt.checkpw(payload.password.encode(), user["password_hash"].encode()):
         raise HTTPException(status_code=401, detail={"msg": "Invalid username or password"})
-    
+
     token_data = {
         "sub": user["id"],
         "username": user["username"],
@@ -47,7 +53,7 @@ async def login(payload: UserLogin):
         "role": user["role"],
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRE_HOURS)
     }
-    
+
     token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return {
         "ok": True,
@@ -59,10 +65,3 @@ async def login(payload: UserLogin):
             "role": user["role"]
         }
     }
-
-@router.post("/admin/verify")
-async def verify_admin_token(x_admin_token: Optional[str] = Header(default=None)):
-    if not x_admin_token or x_admin_token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    return {"ok": True}
-
