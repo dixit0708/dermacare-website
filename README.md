@@ -1,16 +1,44 @@
-# React + Vite
+# Dr Chauhan Clinic - Website & DPMS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Clinic website with online appointment booking, plus an admin panel (DPMS) for
+managing patients, consultations, medicines and appointments.
 
-Currently, two official plugins are available:
+- **Backend:** FastAPI + MongoDB (Motor)
+- **Frontend:** plain HTML / CSS / JavaScript, Tailwind for the public site styles
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Project structure
 
-## React Compiler
+```
+backend/
+  server.py        FastAPI app, also serves the frontend
+  app/routes/      auth, patients, appointments, medicines APIs
+  app/services/    email, SMS and reminder scheduler
+frontend/
+  index.html       public website
+  admin/           DPMS admin panel (served at /admin)
+  build-css.mjs    builds assets/css/site.css from source.css
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Running locally
 
-## Expanding the ESLint configuration
+1. Create `backend/.env` with at least `MONGO_URL`, `DB_NAME` and `JWT_SECRET`.
+   Optional: `ADMIN_TOKEN`, `SMTP_*` for email, `MSG91_*` for SMS.
+2. Install and start the backend:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+   ```
+   cd backend
+   pip install -r requirements.txt
+   python server.py
+   ```
+
+3. Open http://localhost:8000 for the website and http://localhost:8000/admin for the admin panel.
+
+## Rebuilding the site CSS
+
+Only needed after changing Tailwind classes or `source.css`:
+
+```
+cd frontend
+npm install postcss @tailwindcss/postcss autoprefixer
+node build-css.mjs
+```

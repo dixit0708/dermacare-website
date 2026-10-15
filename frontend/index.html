@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%23059669'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='50' y='66' font-family='Outfit, sans-serif' font-size='54' font-weight='700' text-anchor='middle' fill='white'%3EC%3C/text%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="description" content="DermaCare — Advanced Hair Loss, PRP Therapy, Cupping Therapy, Acne & Skin Treatments by DermaCare Specialists. Academic demo project." />
+    <meta name="keywords" content="Hair Loss Treatment, PRP Therapy, Hair Clinic, Skin Specialist, Acne Treatment, Fungal Infection Treatment, Cupping Therapy, DermaCare Specialists" />
+    <meta name="author" content="DermaCare" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <meta property="og:title" content="DermaCare | Hair, Skin & PRP Clinic" />
+    <meta property="og:description" content="Restore Your Hair. Revive Your Skin. Regain Your Confidence. Advanced PRP, Cupping, Acne & Skin Treatments by DermaCare Specialists." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DermaCare" />
+    <meta name="twitter:description" content="Advanced Hair, Skin, PRP & Cupping Therapy by DermaCare Specialists." />
+
+    <title>DermaCare | Hair, Skin, PRP & Cupping Clinic</title>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["MedicalClinic", "LocalBusiness"],
+      "name": "DermaCare",
+      "alternateName": "DermaCare",
+      "image": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "url": "https://example.com",
+      "telephone": "+91-9876543210",
+      "priceRange": "₹₹",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "MG Road",
+        "addressLocality": "Sample City",
+        "postalCode": "000001",
+        "addressRegion": "Sample State",
+        "addressCountry": "IN"
+      },
+      "openingHoursSpecification": [{
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        "opens": "10:00",
+        "closes": "17:00"
+      }],
+      "medicalSpecialty": ["Dermatology", "Trichology", "AlternativeMedicine"],
+      "physician": {
+        "@type": "Physician",
+        "name": "DermaCare Specialists",
+        "medicalSpecialty": "Dermatology",
+        "alumniOf": "MBBS, MD (Dermatology, Venereology & Leprosy)"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="/assets/css/site.css" />
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div class="font-sans text-slate-800 bg-slate-50 min-h-screen relative selection:bg-emerald-200 selection:text-emerald-900 overflow-x-hidden">
+
+      <!-- Navbar -->
+      <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/75 border-b border-slate-200/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <a href="#top" class="flex items-center gap-2" data-testid="navbar-logo">
+            <img src="/assets/img/logo.png" alt="DermaCare" class="h-8 object-contain" />
+          </a>
+          <nav class="hidden md:flex items-center gap-7 text-sm">
+            <a href="#services" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-services">Services</a>
+            <a href="#about" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-doctor">Doctor</a>
+            <a href="#process" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-process">Process</a>
+            <a href="#testimonials" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-reviews">Reviews</a>
+            <a href="#faq" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-faq">FAQ</a>
+            <a href="#contact" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-contact">Contact</a>
+            <a href="/admin" class="text-slate-700 hover:text-emerald-700 transition-colors" data-testid="nav-admin">Admin</a>
+          </nav>
+          <div class="hidden md:flex items-center gap-3">
+            <a href="tel:9876543210" class="text-sm text-slate-700 inline-flex items-center gap-2 hover:text-emerald-700" data-testid="navbar-phone">
+              <span class="h-4 w-4 [&>svg]:h-4 [&>svg]:w-4" data-icon="phone"></span> 9876543210
+            </a>
+            <a href="#booking">
+              <button class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary hover:bg-primary/90 h-10 py-2 btn-gradient text-white rounded-full px-5" data-testid="navbar-book-button">Book Appointment</button>
+            </a>
+          </div>
+          <button id="navbar-toggle" class="md:hidden p-2" aria-label="Menu" data-testid="navbar-mobile-toggle">
+            <span data-icon="menu"></span>
+          </button>
+        </div>
+        <div id="navbar-mobile-panel" class="md:hidden border-t border-slate-200 bg-white/95 hidden">
+          <div class="px-4 py-3 flex flex-col gap-3">
+            <a href="#services" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-services">Services</a>
+            <a href="#about" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-doctor">Doctor</a>
+            <a href="#process" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-process">Process</a>
+            <a href="#testimonials" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-reviews">Reviews</a>
+            <a href="#faq" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-faq">FAQ</a>
+            <a href="#contact" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-contact">Contact</a>
+            <a href="/admin" class="mobile-nav-link text-slate-700 py-1" data-testid="mobile-nav-admin">Admin</a>
+            <a href="#booking" class="mobile-nav-link">
+              <button class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary hover:bg-primary/90 h-10 px-4 py-2 btn-gradient text-white rounded-full w-full" data-testid="mobile-book-button">Book Appointment</button>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero -->
+      <section id="top" class="relative w-full h-[85vh] min-h-[600px] flex items-center overflow-hidden bg-slate-900">
+        <div id="hero-slides"></div>
+
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-black/10 z-10 pointer-events-none"></div>
+
+        <div class="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center h-full pt-16">
+          <div class="hero-copy-in max-w-3xl">
+            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-900/40 backdrop-blur-md border border-emerald-400/30 px-4 py-1.5 text-xs tracking-[0.2em] uppercase text-emerald-100 shadow-sm">
+              <span class="h-3.5 w-3.5 [&>svg]:h-3.5 [&>svg]:w-3.5" data-icon="sparkles"></span> Premium Skin & Hair Care
+            </span>
+            <h1 class="mt-6 text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+              Advanced Skin, Hair & Wellness Care
+            </h1>
+            <p class="mt-6 text-lg sm:text-xl text-slate-200 max-w-2xl leading-relaxed">
+              Expert treatments for hair restoration, acne, pigmentation, physiotherapy, and holistic wellness.
+            </p>
+            <div class="mt-10 flex flex-col sm:flex-row gap-4">
+              <a href="#booking">
+                <button class="inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 px-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full h-14 text-base font-semibold shadow-[0_0_20px_rgba(5,150,105,0.4)] border-0 w-full sm:w-auto transition-transform hover:scale-105">Book Consultation</button>
+              </a>
+              <a href="#services">
+                <button class="inline-flex items-center justify-center whitespace-nowrap ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border px-8 rounded-full h-14 text-base font-semibold border-white/40 text-white hover:bg-white/10 hover:text-white bg-white/5 backdrop-blur-md w-full sm:w-auto transition-transform hover:scale-105">View Treatments</button>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div id="hero-dots" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20"></div>
+      </section>
+
+      <!-- About Doctor -->
+      <section id="about" class="py-24 md:py-32 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12 items-center">
+          <div class="reveal-left lg:col-span-5">
+            <div class="relative rounded-[2rem] overflow-hidden aspect-[4/5] img-depth hero-img-3d">
+              <img src="https://images.unsplash.com/photo-1637059824899-a441006a6875?crop=entropy&cs=srgb&fm=jpg&w=900&q=85" alt="Our DermaCare Specialist" class="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div class="reveal-right lg:col-span-7">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">About the Doctor</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">Meet <span class="text-gradient">Our DermaCare Specialist</span></h2>
+            <p class="mt-6 text-slate-600 leading-relaxed text-lg">
+              Our DermaCare Specialist is dedicated to providing effective and personalized solutions for hair loss, scalp disorders, acne, skin diseases, and wellness therapies. Combining modern therapeutic approaches with patient-focused care, he delivers safe, result-oriented treatment plans for every patient.
+            </p>
+            <div class="mt-8 grid sm:grid-cols-2 gap-4">
+              <div class="rounded-2xl border border-slate-200 p-5">
+                <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Qualifications</div>
+                <div class="mt-2 text-slate-900 font-medium">MBBS · MD (Dermatology)</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 p-5">
+                <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Expertise</div>
+                <div class="mt-2 text-slate-900 font-medium">Hair, Skin, PRP & Cupping</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 p-5">
+                <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Consultation</div>
+                <div class="mt-2 text-slate-900 font-medium">Mon – Sat, 10AM – 5PM</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 p-5">
+                <div class="text-xs uppercase tracking-wider text-emerald-700 font-semibold">Approach</div>
+                <div class="mt-2 text-slate-900 font-medium">Modern · Personalized · Holistic</div>
+              </div>
+            </div>
+            <div class="mt-8 flex gap-3">
+              <a href="#booking"><button class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary hover:bg-primary/90 h-10 py-2 btn-gradient text-white rounded-full px-6" data-testid="about-book-button">Book a Consultation</button></a>
+              <a href="tel:9876543210"><button class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 py-2 rounded-full px-6" data-testid="about-call-button"><span class="h-4 w-4 mr-2 [&>svg]:h-4 [&>svg]:w-4" data-icon="phone"></span>9876543210</button></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Services -->
+      <section id="services" class="py-24 md:py-32 bg-slate-50 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div class="max-w-3xl">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">Our Services</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">Treatments crafted for <span class="text-gradient">real results</span>.</h2>
+            <p class="mt-5 text-slate-600 text-lg">From hair restoration to skin rejuvenation and wellness therapies — every plan is built around you.</p>
+          </div>
+          <div id="services-groups" class="mt-14 space-y-16"></div>
+        </div>
+      </section>
+
+      <!-- Conditions -->
+      <section id="conditions" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-3xl">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">Conditions We Treat</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">From <span class="text-gradient">hair fall</span> to <span class="text-gradient">stubborn acne</span> — we’ve got you covered.</h2>
+          </div>
+          <div class="mt-12 grid md:grid-cols-2 gap-8">
+            <div class="rounded-2xl border border-slate-200 p-8 bg-gradient-to-br from-emerald-50/60 to-white">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center"><span class="h-5 w-5 [&>svg]:h-5 [&>svg]:w-5" data-icon="sparkles"></span></div>
+                <h3 class="text-2xl font-semibold text-slate-900">Hair Conditions</h3>
+              </div>
+              <div class="mt-6 flex flex-wrap gap-2">
+                <span class="px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-sm">Hair Fall</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-sm">Male Pattern Baldness</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-sm">Female Hair Thinning</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-sm">Alopecia</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-sm">Dandruff</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-sm">Scalp Disorders</span>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-slate-200 p-8 bg-gradient-to-br from-blue-50/60 to-white">
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-blue-700 text-white flex items-center justify-center"><span class="h-5 w-5 [&>svg]:h-5 [&>svg]:w-5" data-icon="sun"></span></div>
+                <h3 class="text-2xl font-semibold text-slate-900">Skin Conditions</h3>
+              </div>
+              <div class="mt-6 flex flex-wrap gap-2">
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Acne</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Pimples</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Acne Scars</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Pigmentation</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Melasma</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Fungal Infections</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Eczema</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Psoriasis</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Skin Allergies</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Rashes</span>
+                <span class="px-4 py-2 rounded-full bg-white border border-blue-200 text-slate-700 text-sm">Itching</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why Choose Us -->
+      <section class="py-24 md:py-32 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-3xl">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">Why Choose Us</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">A clinic built around <span class="text-gradient">trust, hygiene & outcomes</span>.</h2>
+          </div>
+          <div id="why-grid" class="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section id="testimonials" class="py-24 md:py-32 bg-gradient-to-b from-emerald-50/40 to-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div class="max-w-3xl">
+              <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">Patient Stories</span>
+              <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">Hear from our <span class="text-gradient">happy patients</span>.</h2>
+            </div>
+          </div>
+          <div id="testimonials-grid" class="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+      </section>
+
+      <!-- Process -->
+      <section id="process" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-3xl mx-auto text-center">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">How It Works</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">Our <span class="text-gradient">Treatment Process</span>.</h2>
+          </div>
+          <div class="mt-16 grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="relative group">
+              <div class="text-5xl font-bold text-emerald-200 step-3d group-hover:text-emerald-300 transition-colors">01</div>
+              <div class="mt-4 font-semibold text-slate-900 text-lg">Consultation</div>
+              <p class="mt-2 text-sm text-slate-600">In-depth conversation to understand your condition, history and goals.</p>
+            </div>
+            <div class="relative group">
+              <div class="text-5xl font-bold text-emerald-200 step-3d group-hover:text-emerald-300 transition-colors">02</div>
+              <div class="mt-4 font-semibold text-slate-900 text-lg">Diagnosis</div>
+              <p class="mt-2 text-sm text-slate-600">Detailed evaluation of scalp / skin to identify the precise cause.</p>
+            </div>
+            <div class="relative group">
+              <div class="text-5xl font-bold text-emerald-200 step-3d group-hover:text-emerald-300 transition-colors">03</div>
+              <div class="mt-4 font-semibold text-slate-900 text-lg">Personalized Plan</div>
+              <p class="mt-2 text-sm text-slate-600">Custom treatment protocol crafted around you, with clear timelines.</p>
+            </div>
+            <div class="relative group">
+              <div class="text-5xl font-bold text-emerald-200 step-3d group-hover:text-emerald-300 transition-colors">04</div>
+              <div class="mt-4 font-semibold text-slate-900 text-lg">Therapy Sessions</div>
+              <p class="mt-2 text-sm text-slate-600">Carefully delivered therapy in a hygienic, comfortable setting.</p>
+            </div>
+            <div class="relative group">
+              <div class="text-5xl font-bold text-emerald-200 step-3d group-hover:text-emerald-300 transition-colors">05</div>
+              <div class="mt-4 font-semibold text-slate-900 text-lg">Follow-Up & Monitoring</div>
+              <p class="mt-2 text-sm text-slate-600">Ongoing reviews and adjustments to ensure sustained results.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="py-24 bg-slate-50">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-12">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">Got Questions?</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">Frequently Asked <span class="text-gradient">Questions</span></h2>
+          </div>
+          <div class="w-full bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-2">
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">What is PRP therapy?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">PRP (Platelet-Rich Plasma) uses growth factors from your own blood to stimulate hair follicles and skin rejuvenation. It is natural and minimally invasive.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">Is PRP effective for hair loss?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Yes — most patients see noticeable reduction in hair fall and visible regrowth across 3–6 sessions when paired with a tailored plan.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">How many sessions are needed?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Typically 4–6 PRP sessions spaced 3–4 weeks apart, with maintenance sessions as advised by DermaCare Doctor.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">Can acne scars be treated?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Yes. We use a combination of targeted therapies to progressively smooth pitted, rolling and boxcar scars.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">What skin conditions do you treat?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Acne, pigmentation, melasma, fungal infections, eczema, psoriasis, allergies, rashes and itching, among others.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">What is cupping therapy?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Cupping (Hijama) is a therapeutic technique that improves circulation, relieves pain and supports natural detoxification. At DermaCare it is performed in a sterile setting under the care of our MD dermatologist.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">How long does a treatment take?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Most consultations take 20–30 minutes. Sessions range 30–60 minutes depending on the treatment.</div>
+            </details>
+            <details class="group border-b border-border/60 py-2">
+              <summary class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline cursor-pointer list-none text-left text-slate-900 hover:text-emerald-700">Is consultation available for both men and women?</summary>
+              <div class="pb-4 pt-0 text-sm text-muted-foreground text-slate-600 leading-relaxed">Yes — we treat patients of all ages and genders in a private, respectful environment.</div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Booking & Contact -->
+      <section id="booking" class="py-24 bg-white relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-16">
+          <div id="contact">
+            <span class="text-xs font-bold tracking-[0.22em] uppercase text-emerald-700">Book Appointment</span>
+            <h2 class="mt-3 text-3xl md:text-5xl font-semibold text-slate-900 tracking-tight">Take the first step towards <span class="text-gradient">better health</span>.</h2>
+            <p class="mt-6 text-lg text-slate-600">Fill out the form to request a consultation, and our team will get back to you shortly to confirm your time.</p>
+
+            <div class="mt-12 space-y-6">
+              <div class="flex gap-4 items-start">
+                <div class="mt-1 bg-emerald-100 p-3 rounded-full text-emerald-700 [&>svg]:h-6 [&>svg]:w-6" data-icon="mapPin"></div>
+                <div>
+                  <div class="font-semibold text-slate-900 text-lg">Clinic Location</div>
+                  <div class="text-slate-600 mt-1">DermaCare Clinic, MG Road, Sample City – 000001, Sample State</div>
+                </div>
+              </div>
+              <div class="flex gap-4 items-start">
+                <div class="mt-1 bg-blue-100 p-3 rounded-full text-blue-700 [&>svg]:h-6 [&>svg]:w-6" data-icon="clock"></div>
+                <div>
+                  <div class="font-semibold text-slate-900 text-lg">Opening Hours</div>
+                  <div class="text-slate-600 mt-1">Monday – Saturday<br/>10:00 AM – 5:00 PM</div>
+                </div>
+              </div>
+              <div class="flex gap-4 items-start">
+                <div class="mt-1 bg-emerald-100 p-3 rounded-full text-emerald-700 [&>svg]:h-6 [&>svg]:w-6" data-icon="phone"></div>
+                <div>
+                  <div class="font-semibold text-slate-900 text-lg">Contact</div>
+                  <div class="text-slate-600 mt-1">+91 9876543210</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-3d rounded-[2rem] p-8 gradient-border bg-slate-50/50">
+            <form id="booking-form" class="space-y-5">
+              <div class="grid grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Full Name *</label>
+                  <input required name="full_name" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="John Doe" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Phone Number *</label>
+                  <input required name="phone" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Your mobile number" />
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-5">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Age *</label>
+                  <input required type="number" min="1" max="120" name="age" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Age" />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Gender *</label>
+                  <select required name="gender" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                    <option value="" disabled hidden selected>Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email *</label>
+                  <input required type="email" name="email" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="you@email.com" />
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Address *</label>
+                <input required name="address" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Your complete address" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Consultation Type *</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <button type="button" data-consultation="online" class="consultation-toggle flex items-center justify-center gap-2 h-11 rounded-xl border-2 text-sm font-medium transition-all duration-200 border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm">
+                    <span class="h-4 w-4 [&>svg]:h-4 [&>svg]:w-4" data-icon="messageCircle"></span>
+                    Online Consultation
+                  </button>
+                  <button type="button" data-consultation="walk_in" class="consultation-toggle flex items-center justify-center gap-2 h-11 rounded-xl border-2 text-sm font-medium transition-all duration-200 border-slate-200 bg-white text-slate-600 hover:border-slate-300">
+                    <span class="h-4 w-4 [&>svg]:h-4 [&>svg]:w-4" data-icon="mapPin"></span>
+                    Walk-in Clinic Visit
+                  </button>
+                </div>
+                <input type="hidden" name="consultation_type" value="online" />
+              </div>
+              <div class="grid grid-cols-2 gap-5">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Treatment Needed *</label>
+                  <select required name="treatment" id="treatment-select" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                    <option value="" disabled hidden selected>Select Treatment</option>
+                  </select>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Preferred Date *</label>
+                  <input required type="date" name="preferred_date" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Message</label>
+                <textarea name="message" rows="3" class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Any specific concerns?"></textarea>
+              </div>
+              <button id="booking-submit" type="submit" class="inline-flex items-center justify-center whitespace-nowrap font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary hover:bg-primary/90 px-4 w-full btn-gradient text-white h-12 text-lg rounded-full btn-3d">
+                Request Appointment
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-8">
+          <div class="md:col-span-2">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="h-8 w-8 rounded-lg btn-gradient flex items-center justify-center text-white font-bold">D</div>
+              <div class="font-semibold text-white text-lg">DermaCare</div>
+            </div>
+            <p class="text-slate-400 max-w-sm mb-6">Premium Hair Restoration, PRP Therapy, Cupping, Acne & Skin Treatments.</p>
+            <div class="flex gap-4">
+              <a href="tel:9876543210" class="bg-slate-800 p-2 rounded-full hover:bg-emerald-600 transition text-white [&>svg]:h-[18px] [&>svg]:w-[18px]" data-icon="phone"></a>
+              <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" class="bg-slate-800 p-2 rounded-full hover:bg-[#25D366] transition text-white [&>svg]:h-[18px] [&>svg]:w-[18px]" data-icon="messageCircle"></a>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-white font-semibold mb-4">Quick Links</h4>
+            <ul class="space-y-2">
+              <li><a href="#services" class="hover:text-emerald-400 transition">Services</a></li>
+              <li><a href="#about" class="hover:text-emerald-400 transition">Doctor Profile</a></li>
+              <li><a href="#testimonials" class="hover:text-emerald-400 transition">Reviews</a></li>
+              <li><a href="#booking" class="hover:text-emerald-400 transition">Book Appointment</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-white font-semibold mb-4">Clinic Hours</h4>
+            <ul class="space-y-2 text-sm text-slate-400">
+              <li>Monday: 10AM – 5PM</li>
+              <li>Tuesday: 10AM – 5PM</li>
+              <li>Wednesday: 10AM – 5PM</li>
+              <li>Thursday: 10AM – 5PM</li>
+              <li>Friday: 10AM – 5PM</li>
+              <li>Saturday: 10AM – 5PM</li>
+              <li>Sunday: Closed</li>
+            </ul>
+          </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
+          <p id="footer-year">&copy; DermaCare. All rights reserved.</p>
+        </div>
+      </footer>
+
+      <!-- Floating Actions -->
+      <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" class="bg-[#25D366] text-white p-3.5 rounded-full fab-3d pulse-glow flex items-center justify-center [&>svg]:h-7 [&>svg]:w-7" aria-label="WhatsApp" data-icon="messageCircle"></a>
+        <a href="tel:9876543210" class="bg-slate-900 text-white p-3.5 rounded-full fab-3d flex items-center justify-center [&>svg]:h-7 [&>svg]:w-7" aria-label="Call" data-icon="phone"></a>
+      </div>
+    </div>
+
+    <div id="toast-root" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 items-end"></div>
+
+    <script type="module" src="/assets/js/site.js"></script>
+  </body>
+</html>
