@@ -1,4 +1,4 @@
-# Dr Chauhan Clinic - Website & DPMS
+# MediStream : Full-Stack Digital Health Platform (Website & DPMS)
 
 Clinic website with online appointment booking, plus an admin panel (DPMS) for
 managing patients, consultations, medicines and appointments.
