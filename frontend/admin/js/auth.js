@@ -1,16 +1,14 @@
-// Session helpers. The logged-in user is kept in sessionStorage.
+// The login token lives in sessionStorage.
 
+// Reads the token's payload (role, name) for the UI only. It isn't verified here;
+// the server checks the signature on every request.
 function parseJwt(token) {
   try {
-    const payload = token.split(".")[1];
-    const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(decodeURIComponent(escape(decoded)));
-  } catch (e) {
-    try {
-      return JSON.parse(atob(token.split(".")[1]));
-    } catch (e2) {
-      return null;
-    }
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)); // UTF-8, so names like "Dr. Śarmā" survive
+  } catch {
+    return null;
   }
 }
 

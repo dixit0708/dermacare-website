@@ -1,10 +1,11 @@
-fastapi>=0.110.0
-uvicorn[standard]>=0.29.0
-motor>=3.3.2
-pydantic>=2.7.0
-pydantic-settings>=2.3.0
-email-validator>=2.1.1
-python-dotenv>=1.0.1
-bcrypt
-PyJWT
-httpx
+# Direct dependencies, pinned to the versions this project is tested with.
+# Upgrade deliberately: bcrypt 5, for example, started rejecting passwords over 72 bytes.
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+motor==3.7.1
+pymongo==4.19.0
+pydantic==2.14.2
+email-validator==2.3.0
+python-dotenv==1.2.4
+bcrypt==5.0.0
+PyJWT==2.15.1

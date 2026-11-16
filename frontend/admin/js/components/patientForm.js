@@ -1,79 +1,16 @@
-// New patient registration form.
-// A 409 from the API means the patient is already registered, so the duplicate dialog is shown.
-
 import api from "../api.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { uploadCloudinaryMedia } from "../cloudinaryUpload.js";
 import { esc } from "../escape.js";
+import { openDialog } from "../dialog.js";
+import { openCustomTreatmentDialog } from "./customTreatmentDialog.js";
+import { render as renderBloodTestSelector } from "./bloodTestSelector.js";
+import { render as renderMedicinesSelector } from "./medicinesSelector.js";
+import { TREATMENTS, ADVICE_OPTIONS, HISTORY_OPTIONS } from "../clinicOptions.js";
+import { APPOINTMENT_STATUS, APPOINTMENT_SOURCE } from "../constants.js";
 
 const GENDERS = ["Male", "Female", "Other"];
-
-const ADVICE_OPTIONS = [
-  "use RO water for head wash",
-  "eat Diet",
-  "head stand",
-  "avoid junk food",
-  "ensure good sleep",
-  "use sulfate-free shampoo",
-  "manage stress",
-  "increase protein intake",
-];
-
-const HISTORY_OPTIONS = [
-  "Alopecia Areata",
-  "PCOS",
-  "Thyroid Disorder",
-  "Telogen Effluvium",
-  "Nutritional Deficiencies (Iron/Biotin/Zinc)",
-  "Family History of Hair Loss",
-  "Androgenetic Alopecia",
-  "Traction Alopecia",
-  "Dandruff / Seborrheic Dermatitis",
-  "Scalp Psoriasis",
-];
-
-const TREATMENTS = [
-  "Cupping",
-  "GFC (Growth Factor Concentrate)",
-  "PRP (Platelet Rich Plasma)",
-  "PRP with Biotin",
-  "Mesotherapy",
-  "Massage",
-  "Other",
-];
-
-// Blood test categories
-const BLOOD_TEST_CATEGORIES = [
-  {
-    category: "Hormonal Profile", color: "#7c3aed", bg: "#f5f3ff",
-    tests: ["TSH (Thyroid Stimulating Hormone)", "Free T3", "Free T4", "Thyroid Profile (T3, T4, TSH)", "Testosterone (Total)", "Testosterone (Free)", "DHT (Dihydrotestosterone)", "DHEA-S", "Prolactin", "LH (Luteinizing Hormone)", "FSH (Follicle Stimulating Hormone)", "Cortisol (Morning)", "Estradiol (E2)", "Progesterone", "Fasting Insulin", "HOMA-IR", "Androstenedione", "AMH (Anti-Müllerian Hormone)"],
-  },
-  {
-    category: "Nutritional Deficiencies", color: "#d97706", bg: "#fffbeb",
-    tests: ["Serum Ferritin", "Serum Iron", "TIBC (Total Iron Binding Capacity)", "Vitamin D (25-OH)", "Vitamin B12", "Folic Acid (Folate)", "Zinc (Serum)", "Copper (Serum)", "Biotin (Vitamin B7)", "Selenium", "Serum Calcium", "Magnesium", "Phosphorus"],
-  },
-  {
-    category: "Complete Blood Count", color: "#dc2626", bg: "#fef2f2",
-    tests: ["CBC (Complete Blood Count)", "Hemoglobin", "Hematocrit (PCV)", "ESR (Erythrocyte Sedimentation Rate)", "Peripheral Smear"],
-  },
-  {
-    category: "Blood Sugar & Metabolic", color: "#0891b2", bg: "#f0fdfe",
-    tests: ["Fasting Blood Sugar (FBS)", "Post-Prandial Blood Sugar (PPBS)", "HbA1c (Glycated Hemoglobin)", "Lipid Profile", "CRP (C-Reactive Protein)", "IL-6 (Interleukin-6)"],
-  },
-  {
-    category: "Liver & Kidney", color: "#16a34a", bg: "#f0fdf4",
-    tests: ["LFT (Liver Function Test)", "KFT (Kidney Function Test)", "SGOT (AST)", "SGPT (ALT)", "Serum Albumin", "Bilirubin (Total & Direct)"],
-  },
-  {
-    category: "Autoimmune & Allergy", color: "#db2777", bg: "#fdf2f8",
-    tests: ["ANA (Antinuclear Antibody)", "Anti-ds DNA", "IgE (Total)", "Specific IgE Panel", "ANCA", "Complement C3", "Complement C4", "RF (Rheumatoid Factor)"],
-  },
-  {
-    category: "PCOS Panel", color: "#9333ea", bg: "#faf5ff",
-    tests: ["PCOS Panel (LH, FSH, Testosterone, DHEA-S, Insulin)", "Fasting Insulin (PCOS)", "Androstenedione (PCOS)"],
-  },
-];
 
 function emptyForm() {
   return {
@@ -83,28 +20,23 @@ function emptyForm() {
   };
 }
 
-function openDialog({ iconBg, icon, title, subtitle, bodyHtml, actionsHtml }) {
-  const overlay = document.createElement("div");
-  overlay.className = "dialog-overlay";
-  overlay.innerHTML = `
-    <div class="dialog">
-      <div class="dialog-title" style="display:flex;align-items:center;gap:12px;border-bottom:none;">
-        <div style="width:44px;height:44px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:20px;">${icon}</div>
-        <div>
-          <div style="font-weight:700;line-height:1.2;">${title}</div>
-          <div style="color:#64748b;font-size:0.75rem;">${subtitle}</div>
-        </div>
-      </div>
-      <div class="dialog-content">${bodyHtml}</div>
-      <div class="dialog-actions">${actionsHtml}</div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
-  return overlay;
+// The registration result dialogs: a coloured icon next to a title and subtitle.
+function openResultDialog({ iconBg, icon, title, subtitle, content, actions }) {
+  return openDialog({
+    titleStyle: "display:flex;align-items:center;gap:12px;border-bottom:none;",
+    title: `
+      <div style="width:44px;height:44px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:20px;">${icon}</div>
+      <div>
+        <div style="font-weight:700;line-height:1.2;">${title}</div>
+        <div style="color:#64748b;font-size:0.75rem;">${subtitle}</div>
+      </div>`,
+    content,
+    actions,
+  });
 }
 
-export function render(container, { mode = "offline", prefillData = null } = {}) {
+// onPrefillUsed: called once the prefilled website booking has been linked to the new patient.
+export function render(container, { mode = "offline", prefillData = null, onPrefillUsed = null } = {}) {
   const isOnline = mode === "online";
   let form = emptyForm();
   if (prefillData) {
@@ -116,7 +48,8 @@ export function render(container, { mode = "offline", prefillData = null } = {})
       age: prefillData.age || "",
       gender: prefillData.gender || "",
       address: prefillData.address || "",
-      current_issues: prefillData.message || "",
+      // The booking message goes into medical_history only: the patient page shows
+      // current_issues merged into medical_history, so filling both would repeat it.
       medical_history: prefillData.message || "",
       treatment: prefillData.treatment || "",
     };
@@ -126,11 +59,7 @@ export function render(container, { mode = "offline", prefillData = null } = {})
   let videos = [];
   let selectedMedicines = [];
   let selectedBloodTests = [];
-  let uploadLoading = false;
   let otherTreatment = "";
-  let medicines = [];
-  let selectedMedicineId = "";
-  let medsError = "";
 
   const wrap = document.createElement("div");
   wrap.className = "paper";
@@ -215,28 +144,13 @@ export function render(container, { mode = "offline", prefillData = null } = {})
 
   const el = (sel) => wrap.querySelector(sel);
 
-  // field bindings
-  el("#pf-full_name").addEventListener("input", (e) => (form.full_name = e.target.value));
-  el("#pf-whatsapp").addEventListener("input", (e) => (form.whatsapp = e.target.value));
-  el("#pf-email").addEventListener("input", (e) => (form.email = e.target.value));
-  el("#pf-age").addEventListener("input", (e) => (form.age = e.target.value));
-  el("#pf-gender").addEventListener("change", (e) => (form.gender = e.target.value));
-  el("#pf-address").addEventListener("input", (e) => (form.address = e.target.value));
-  el("#pf-medical_history").addEventListener("input", (e) => (form.medical_history = e.target.value));
-  el("#pf-doctor_notes").addEventListener("input", (e) => (form.doctor_notes = e.target.value));
-  el("#pf-doctor_advice").addEventListener("input", (e) => (form.doctor_advice = e.target.value));
+  // Each input's id is "pf-" + its field name: fill it from `form` and keep `form` in sync.
+  ["full_name", "whatsapp", "email", "age", "gender", "address", "medical_history", "doctor_notes", "doctor_advice"].forEach((key) => {
+    const input = el(`#pf-${key}`);
+    input.value = form[key];
+    input.addEventListener(input.tagName === "SELECT" ? "change" : "input", (e) => { form[key] = e.target.value; });
+  });
 
-  // pre-fill values
-  el("#pf-full_name").value = form.full_name;
-  el("#pf-whatsapp").value = form.whatsapp;
-  el("#pf-email").value = form.email;
-  el("#pf-age").value = form.age;
-  el("#pf-gender").value = form.gender;
-  el("#pf-address").value = form.address;
-  el("#pf-medical_history").value = form.medical_history;
-  el("#pf-doctor_advice").value = form.doctor_advice;
-
-  // history / advice quick chips
   const historyChips = el("#pf-history-chips");
   HISTORY_OPTIONS.forEach((hist) => {
     const chip = document.createElement("span");
@@ -269,7 +183,6 @@ export function render(container, { mode = "offline", prefillData = null } = {})
     adviceChips.appendChild(chip);
   });
 
-  // treatment select
   const treatmentSelect = el("#pf-treatment");
   const treatmentCustomLabel = el("#pf-treatment-custom");
   function syncTreatmentSelect() {
@@ -293,126 +206,33 @@ export function render(container, { mode = "offline", prefillData = null } = {})
   syncTreatmentSelect();
 
   function openOtherTreatmentDialog() {
-    const overlay = document.createElement("div");
-    overlay.className = "dialog-overlay";
-    overlay.innerHTML = `
-      <div class="dialog">
-        <div class="dialog-title">Specify Custom Treatment</div>
-        <div class="dialog-content">
-          <div class="field"><label class="field-label">Treatment Name</label><input class="input" id="pf-other-treatment-input" autofocus /></div>
-        </div>
-        <div class="dialog-actions">
-          <button type="button" class="btn btn-ghost" id="pf-other-cancel">Cancel</button>
-          <button type="button" class="btn btn-primary" id="pf-other-ok">OK</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    const input = overlay.querySelector("#pf-other-treatment-input");
-    input.value = otherTreatment;
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) { overlay.remove(); syncTreatmentSelect(); } });
-    overlay.querySelector("#pf-other-cancel").addEventListener("click", () => { overlay.remove(); syncTreatmentSelect(); });
-    overlay.querySelector("#pf-other-ok").addEventListener("click", () => {
-      otherTreatment = input.value;
-      form.treatment = otherTreatment;
-      overlay.remove();
-      syncTreatmentSelect();
+    openCustomTreatmentDialog({
+      initial: otherTreatment,
+      onSave: (name) => {
+        otherTreatment = name;
+        form.treatment = name;
+        syncTreatmentSelect();
+      },
+      onCancel: syncTreatmentSelect, // puts the select back on the current treatment
     });
   }
 
-  // Blood Test Prescriptions (offline only)
+  // Offline patients only. Re-rendered after a save so no old selections stay on screen.
   const bloodSection = el("#pf-bloodtests-section");
-  if (!isOnline) {
+  function renderBloodTests() {
+    if (isOnline) return;
     bloodSection.innerHTML = `
       <div class="flex items-center gap-2 mt-3 mb-2">
         <div style="width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg, #7c3aed, #6d28d9);display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;">\u{1F9EA}</span></div>
         <h4>Blood Test Prescriptions</h4>
       </div>
-      <div id="pf-bt-selected" class="mb-2"></div>
-      <div id="pf-bt-categories" class="mb-2"></div>
-      <div class="field" style="position:relative;">
-        <label class="field-label">Add custom test</label>
-        <div style="display:flex;gap:8px;">
-          <input class="input" id="pf-bt-custom-input" placeholder="Type test name and press Enter" />
-          <button type="button" class="btn btn-outline" id="pf-bt-custom-add">Add</button>
-        </div>
-      </div>
+      <div id="pf-bt-picker" class="mb-2"></div>
       <hr class="divider" />
     `;
-
-    const selectedBox = bloodSection.querySelector("#pf-bt-selected");
-    const categoriesBox = bloodSection.querySelector("#pf-bt-categories");
-    const customInput = bloodSection.querySelector("#pf-bt-custom-input");
-
-    function toggleTest(test) {
-      if (selectedBloodTests.includes(test)) {
-        selectedBloodTests = selectedBloodTests.filter((t) => t !== test);
-      } else {
-        selectedBloodTests = [...selectedBloodTests, test];
-      }
-      renderBloodTests();
-    }
-
-    function addCustomTest() {
-      const t = customInput.value.trim();
-      if (!t || selectedBloodTests.includes(t)) return;
-      selectedBloodTests = [...selectedBloodTests, t];
-      customInput.value = "";
-      renderBloodTests();
-    }
-    bloodSection.querySelector("#pf-bt-custom-add").addEventListener("click", addCustomTest);
-    customInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); addCustomTest(); }
-    });
-
-    function renderBloodTests() {
-      if (selectedBloodTests.length > 0) {
-        selectedBox.innerHTML = `
-          <div style="background:linear-gradient(135deg, #f8faff, #eff6ff);border:1.5px solid #bfdbfe;border-radius:8px;padding:12px;">
-            <div style="color:#1d4ed8;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-size:0.7rem;margin-bottom:8px;">\u{1F9EA} Prescribed Tests (${selectedBloodTests.length})</div>
-            <div class="flex gap-2" style="flex-wrap:wrap;">
-              ${selectedBloodTests
-                .map(
-                  (t, i) => `<span class="chip" data-remove-idx="${i}" style="background:#1d4ed8;color:#fff;cursor:pointer;">${esc(t)} ✕</span>`
-                )
-                .join("")}
-            </div>
-          </div>
-        `;
-        selectedBox.querySelectorAll("[data-remove-idx]").forEach((chipEl) => {
-          chipEl.addEventListener("click", () => toggleTest(selectedBloodTests[Number(chipEl.dataset.removeIdx)]));
-        });
-      } else {
-        selectedBox.innerHTML = "";
-      }
-
-      categoriesBox.innerHTML = BLOOD_TEST_CATEGORIES.map((cat) => {
-        const selectedInCat = cat.tests.filter((t) => selectedBloodTests.includes(t)).length;
-        return `
-          <details style="border:1px solid var(--border);margin-bottom:4px;border-radius:8px;overflow:hidden;">
-            <summary style="background:${cat.bg};padding:10px 12px;cursor:pointer;font-weight:700;color:${cat.color};display:flex;align-items:center;justify-content:space-between;">
-              <span>${cat.category}</span>
-              ${selectedInCat > 0 ? `<span class="chip" style="background:${cat.color};color:#fff;font-size:0.7rem;">${selectedInCat} selected</span>` : ""}
-            </summary>
-            <div style="padding:10px 16px;display:flex;flex-wrap:wrap;gap:6px;">
-              ${cat.tests
-                .map((test) => {
-                  const isSelected = selectedBloodTests.includes(test);
-                  return `<span class="chip" data-test="${esc(test)}" style="cursor:pointer;border:1px solid ${cat.color};color:${isSelected ? "#fff" : cat.color};background:${isSelected ? cat.color : "transparent"};font-weight:${isSelected ? 700 : 400};">${esc(test)}</span>`;
-                })
-                .join("")}
-            </div>
-          </details>
-        `;
-      }).join("");
-      categoriesBox.querySelectorAll("[data-test]").forEach((chipEl) => {
-        chipEl.addEventListener("click", () => toggleTest(chipEl.dataset.test));
-      });
-    }
-    renderBloodTests();
+    renderBloodTestSelector(bloodSection.querySelector("#pf-bt-picker"), selectedBloodTests, (tests) => { selectedBloodTests = tests; });
   }
+  renderBloodTests();
 
-  // Online Order & Payment Details
   const onlineSection = el("#pf-online-section");
   if (isOnline) {
     onlineSection.innerHTML = `
@@ -431,7 +251,6 @@ export function render(container, { mode = "offline", prefillData = null } = {})
     onlineSection.querySelector("#pf-tracking_id").addEventListener("input", (e) => (form.tracking_id = e.target.value));
   }
 
-  // Photo / video upload
   const photosPreview = el("#pf-photos-preview");
   const videosPreview = el("#pf-videos-preview");
   function renderMedia() {
@@ -447,7 +266,6 @@ export function render(container, { mode = "offline", prefillData = null } = {})
     if (mediaType === "photo" && !file.type.startsWith("image/")) { toast.error("Please select an image file."); return; }
     if (mediaType === "video" && !file.type.startsWith("video/")) { toast.error("Please select a video file."); return; }
 
-    uploadLoading = true;
     try {
       const uploaded = await uploadCloudinaryMedia(file);
       if (mediaType === "video") {
@@ -459,137 +277,56 @@ export function render(container, { mode = "offline", prefillData = null } = {})
       }
       renderMedia();
     } catch (err) {
-      console.error(err);
       toast.error(err.message || "Upload error");
-    } finally {
-      uploadLoading = false;
     }
   }
   el("#pf-photo-input").addEventListener("change", (e) => handleMediaFile(e.target, "photo"));
   el("#pf-video-input").addEventListener("change", (e) => handleMediaFile(e.target, "video"));
 
-  // Medicines & Billing
   const medsSection = el("#pf-medicines-section");
-  medsSection.innerHTML = `
-    <div id="pf-meds-alert"></div>
-    <div class="flex items-center gap-2 mb-2">
-      <select class="select" id="pf-meds-select" style="flex:1;">
-        <option value="">Select a medicine</option>
-      </select>
-      <span class="text-muted" style="font-size:0.8rem;">(select to add to bill)</span>
-      <button type="button" class="btn btn-primary" id="pf-meds-add" style="display:none;">Add</button>
-    </div>
-    <div id="pf-meds-list"></div>
-  `;
-  const medsAlert = medsSection.querySelector("#pf-meds-alert");
-  const medsSelect = medsSection.querySelector("#pf-meds-select");
-  const medsAddBtn = medsSection.querySelector("#pf-meds-add");
-  const medsList = medsSection.querySelector("#pf-meds-list");
+  function renderMedicines() {
+    renderMedicinesSelector(medsSection, selectedMedicines, (meds) => { selectedMedicines = meds; });
+  }
+  renderMedicines();
 
-  async function fetchMedicines() {
-    try {
-      const res = await api.get("/api/medicines");
-      medicines = res.data.medicines || [];
-      medsSelect.innerHTML = `<option value="">Select a medicine</option>` +
-        medicines.map((m) => `<option value="${esc(m._id)}">${esc(m.name)} (₹${Number(m.price).toFixed(2)})</option>`).join("");
-    } catch (err) {
-      medsError = "Failed to fetch medicines";
-      renderMedsAlert();
-    }
-  }
-  function renderMedsAlert() {
-    medsAlert.innerHTML = medsError ? `<div class="alert alert-error">${medsError}</div>` : "";
-  }
-  medsSelect.addEventListener("change", (e) => {
-    selectedMedicineId = e.target.value;
-    medsAddBtn.style.display = selectedMedicineId ? "inline-flex" : "none";
-  });
-  medsAddBtn.addEventListener("click", () => {
-    if (!selectedMedicineId) return;
-    const medicine = medicines.find((m) => m._id === selectedMedicineId);
-    if (!medicine) return;
-    if (selectedMedicines.some((m) => m._id === selectedMedicineId)) {
-      medsError = "This medicine is already selected";
-      renderMedsAlert();
-      return;
-    }
-    selectedMedicines = [...selectedMedicines, medicine];
-    selectedMedicineId = "";
-    medsError = "";
-    medsSelect.value = "";
-    medsAddBtn.style.display = "none";
-    renderMedsAlert();
-    renderMedsList();
-  });
-  function renderMedsList() {
-    if (selectedMedicines.length === 0) { medsList.innerHTML = ""; return; }
-    const total = selectedMedicines.reduce((sum, m) => sum + m.price, 0);
-    medsList.innerHTML = `
-      <div class="mt-2" style="background:#fcfcfc;border:1px solid var(--border);border-radius:6px;padding:12px;">
-        ${selectedMedicines
-          .map(
-            (m) => `
-          <div class="flex justify-between items-center mb-2">
-            <div class="flex items-center gap-2">
-              <button type="button" class="btn-ghost" data-remove-med="${esc(m._id)}" style="border:none;background:none;color:var(--danger);cursor:pointer;">✕</button>
-              <span>${esc(m.name)} — ₹${Number(m.price).toFixed(2)}</span>
-            </div>
-          </div>`
-          )
-          .join("")}
-        <div class="flex justify-between" style="border-top:1px dashed #cbd5e1;padding-top:12px;margin-top:8px;">
-          <strong style="color:#475569;">Total Bill</strong>
-          <strong style="color:#1e293b;font-size:1.1em;">₹${total.toFixed(2)}</strong>
-        </div>
-      </div>
-    `;
-    medsList.querySelectorAll("[data-remove-med]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        selectedMedicines = selectedMedicines.filter((m) => m._id !== btn.dataset.removeMed);
-        renderMedsList();
-      });
-    });
-  }
-  fetchMedicines();
-
-  // Duplicate patient dialog
-  function showDupDialog(patientId, name) {
-    const overlay = openDialog({
+  // A WhatsApp number can belong to only one patient. The 409 response carries the
+  // existing patient's ID (not their name), so the dialog shows the matching number.
+  function showDupDialog(patientId, whatsapp) {
+    const { overlay, close } = openResultDialog({
       iconBg: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
       icon: "\u{1F50D}",
       title: "Patient Already Registered",
       subtitle: "Record found in the system",
-      bodyHtml: `
+      content: `
         <div class="alert alert-info">
           <div style="font-weight:600;color:#1e40af;margin-bottom:4px;">This patient is already in our records.</div>
           <div style="color:#1d4ed8;">Please visit the patient's details page to log the new visit.</div>
         </div>
         <div style="background:#f8fafc;border-radius:8px;padding:16px;border:1px solid var(--border);">
           <div style="color:#64748b;text-transform:uppercase;letter-spacing:1px;font-size:0.7rem;">Existing Record</div>
-          <div style="font-weight:700;color:#0f172a;margin-top:4px;">${esc(name)}</div>
+          <div style="font-weight:700;color:#0f172a;margin-top:4px;">WhatsApp ${esc(whatsapp)}</div>
           <div style="color:#6366F1;font-family:monospace;margin-top:2px;">ID: ${esc(patientId)}</div>
         </div>
       `,
-      actionsHtml: `
+      actions: `
         <button type="button" class="btn btn-outline" id="dup-goback-btn">Go Back</button>
         <button type="button" class="btn btn-primary" id="dup-goto-btn">Go to Patient Record →</button>
       `,
     });
-    overlay.querySelector("#dup-goback-btn").addEventListener("click", () => overlay.remove());
+    overlay.querySelector("#dup-goback-btn").addEventListener("click", close);
     overlay.querySelector("#dup-goto-btn").addEventListener("click", () => {
-      overlay.remove();
+      close();
       navigate(`/admin/patients/${patientId}`);
     });
   }
 
-  // Success dialog
   function showSuccessDialog(patientId, name) {
-    const overlay = openDialog({
+    const { overlay, close } = openResultDialog({
       iconBg: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
       icon: "✓",
       title: "Patient Added Successfully!",
       subtitle: "Record has been saved to the system",
-      bodyHtml: `
+      content: `
         <div class="alert alert-success">
           <div style="font-weight:600;color:#166534;margin-bottom:4px;">This patient has been added successfully.</div>
           <div style="color:#15803d;">You can now schedule appointments or log future visits from the patient's detail page.</div>
@@ -600,19 +337,18 @@ export function render(container, { mode = "offline", prefillData = null } = {})
           <div style="color:#6366F1;font-family:monospace;margin-top:2px;">Patient ID: ${esc(patientId)}</div>
         </div>
       `,
-      actionsHtml: `
+      actions: `
         <button type="button" class="btn btn-outline" id="success-again-btn">Add Another Patient</button>
         <button type="button" class="btn btn-primary" id="success-view-btn" style="background:linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">View Patient Record →</button>
       `,
     });
-    overlay.querySelector("#success-again-btn").addEventListener("click", () => overlay.remove());
+    overlay.querySelector("#success-again-btn").addEventListener("click", close);
     overlay.querySelector("#success-view-btn").addEventListener("click", () => {
-      overlay.remove();
+      close();
       navigate(`/admin/patients/${patientId}`);
     });
   }
 
-  // Submit
   el("#pf-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!form.full_name || !form.whatsapp || !form.age || !form.gender || !form.treatment) {
@@ -631,12 +367,16 @@ export function render(container, { mode = "offline", prefillData = null } = {})
         try {
           await api.put(`/api/appointments/${prefillData._id}`, {
             patient_id: res.data.patient_id,
-            status: "Consultation Started",
-            source: "Registered from Website",
+            status: APPOINTMENT_STATUS.STARTED,
+            source: APPOINTMENT_SOURCE.REGISTERED_FROM_WEBSITE,
           });
         } catch (linkErr) {
-          console.error("Failed to link appointment:", linkErr);
+          toast.warning(`Patient saved, but the website booking could not be linked: ${linkErr.message}`);
         }
+        // The booking belongs to this patient now. Forget it, so "Add Another
+        // Patient" (or a tab switch on the dashboard) can't link it to someone else.
+        prefillData = null;
+        if (onPrefillUsed) onPrefillUsed();
       }
 
       showSuccessDialog(res.data.patient_id, form.full_name);
@@ -648,16 +388,15 @@ export function render(container, { mode = "offline", prefillData = null } = {})
       selectedBloodTests = [];
       wrap.querySelector("#pf-form").reset();
       renderMedia();
-      renderMedsList();
+      renderMedicines();
+      renderBloodTests();
       syncTreatmentSelect();
     } catch (err) {
-      const raw = err.response?.data;
-      // FastAPI puts the HTTPException payload under "detail"
-      const data = (raw && raw.detail && typeof raw.detail === "object") ? raw.detail : raw;
-      if (err.response?.status === 409 && data?.duplicate) {
-        showDupDialog(data.patient_id, form.full_name);
+      const detail = err.response?.data?.detail;
+      if (err.response?.status === 409 && detail?.duplicate) {
+        showDupDialog(detail.patient_id, form.whatsapp);
       } else {
-        toast.error(data?.msg || "Create failed: " + err.message);
+        toast.error(`Create failed: ${err.message}`);
       }
     }
   });

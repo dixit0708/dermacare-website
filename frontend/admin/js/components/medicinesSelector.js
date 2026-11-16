@@ -1,10 +1,10 @@
 // Medicines picker. Calls onChange(selectedMedicines) whenever the list changes.
 
 import api from "../api.js";
+import { esc } from "../escape.js";
 
-function esc(v) {
-  return v == null ? '' : String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+// Older catalogue entries may hold the price as text; never let that break rendering.
+const priceOf = (m) => Number(m.price) || 0;
 
 export function render(container, initialSelected = [], onChange) {
   let medicines = [];
@@ -54,13 +54,13 @@ export function render(container, initialSelected = [], onChange) {
   }
 
   function buildHtml() {
-    const totalAmount = selectedMedicines.reduce((sum, m) => sum + m.price, 0);
+    const totalAmount = selectedMedicines.reduce((sum, m) => sum + priceOf(m), 0);
     return `
       ${error ? `<div class="alert alert-error">${esc(error)}</div>` : ''}
       <div class="flex items-center gap-2 mb-2">
         <select class="select ms-select" style="flex:1;" ${loading ? 'disabled' : ''}>
           <option value="">Select a medicine</option>
-          ${medicines.map((m) => `<option value="${esc(m._id)}" ${selectedMedicineId === m._id ? 'selected' : ''}>${esc(m.name)} (₹${m.price.toFixed(2)})</option>`).join('')}
+          ${medicines.map((m) => `<option value="${esc(m._id)}" ${selectedMedicineId === m._id ? 'selected' : ''}>${esc(m.name)} (₹${priceOf(m).toFixed(2)})</option>`).join('')}
         </select>
         <span class="text-muted" style="font-size:0.85rem;">(select to add to bill)</span>
         <button type="button" class="btn btn-primary ms-add-btn" style="${selectedMedicineId ? '' : 'display:none;'}" ${!selectedMedicineId || loading ? 'disabled' : ''}>Add</button>
@@ -72,7 +72,7 @@ export function render(container, initialSelected = [], onChange) {
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-2">
                   <button type="button" class="btn btn-ghost btn-sm ms-remove-btn" data-id="${esc(m._id)}" style="color:#d32f2f;min-width:auto;padding:0;">✕</button>
-                  <span style="color:#334155;">${esc(m.name)} — ₹${m.price.toFixed(2)}</span>
+                  <span style="color:#334155;">${esc(m.name)} — ₹${priceOf(m).toFixed(2)}</span>
                 </div>
               </div>
             `).join('')}

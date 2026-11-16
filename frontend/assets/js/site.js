@@ -31,6 +31,8 @@ const heroSlidesEl = document.getElementById("hero-slides");
 const heroDotsEl = document.getElementById("hero-dots");
 let currentSlide = 0;
 let heroTimer = null;
+const dotClass = (active) => "h-1.5 rounded-full transition-all duration-500 " +
+  (active ? "bg-white w-8" : "bg-white/40 hover:bg-white/60 w-3");
 
 SLIDER_IMAGES.forEach((src, idx) => {
   const slide = document.createElement("div");
@@ -43,9 +45,7 @@ SLIDER_IMAGES.forEach((src, idx) => {
 
   const dot = document.createElement("button");
   dot.setAttribute("aria-label", `Go to slide ${idx + 1}`);
-  dot.className = idx === 0
-    ? "h-1.5 rounded-full transition-all duration-500 bg-white w-8"
-    : "h-1.5 rounded-full transition-all duration-500 bg-white/40 hover:bg-white/60 w-3";
+  dot.className = dotClass(idx === 0);
   dot.addEventListener("click", () => goToSlide(idx));
   heroDotsEl.appendChild(dot);
 });
@@ -55,11 +55,7 @@ function goToSlide(idx) {
   const slides = heroSlidesEl.querySelectorAll(".hero-slide");
   const dots = heroDotsEl.querySelectorAll("button");
   slides.forEach((s, i) => s.classList.toggle("is-active", i === idx));
-  dots.forEach((d, i) => {
-    d.className = i === idx
-      ? "h-1.5 rounded-full transition-all duration-500 bg-white w-8"
-      : "h-1.5 rounded-full transition-all duration-500 bg-white/40 hover:bg-white/60 w-3";
-  });
+  dots.forEach((d, i) => { d.className = dotClass(i === idx); });
 }
 
 function startHeroTimer() {
@@ -82,10 +78,6 @@ const revealObserver = new IntersectionObserver((entries) => {
     }
   });
 }, { threshold: 0.15 });
-
-function observeReveal(el) {
-  revealObserver.observe(el);
-}
 
 // Services
 const servicesGroupsEl = document.getElementById("services-groups");
@@ -121,7 +113,7 @@ SERVICES.forEach((group) => {
       </div>
     `;
     grid.appendChild(card);
-    observeReveal(card);
+    revealObserver.observe(card);
   });
   groupEl.appendChild(grid);
   servicesGroupsEl.appendChild(groupEl);
@@ -141,15 +133,19 @@ WHY.forEach(({ icon, title, desc }, i) => {
     </div>
   `;
   whyGridEl.appendChild(card);
-  observeReveal(card);
+  revealObserver.observe(card);
 });
 
-// Testimonials
+// Testimonials (hidden, with the "Reviews" links, until data.js has real ones)
 const testimonialsGridEl = document.getElementById("testimonials-grid");
+if (TESTIMONIALS.length === 0) {
+  document.getElementById("testimonials").remove();
+  document.querySelectorAll('a[href="#testimonials"]').forEach((link) => (link.closest("li") || link).remove());
+}
 TESTIMONIALS.forEach((t) => {
   const card = document.createElement("div");
   card.className = "glass-3d rounded-2xl p-6 gradient-border card-3d";
-  const stars = Array.from({ length: 5 }).map(() => `<span class="h-4 w-4 text-amber-400 fill-amber-400 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:fill-amber-400">${ICONS.star}</span>`).join("");
+  const stars = Array.from({ length: t.rating }).map(() => `<span class="h-4 w-4 text-amber-400 fill-amber-400 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:fill-amber-400">${ICONS.star}</span>`).join("");
   card.innerHTML = `
     <div class="card-3d-inner">
       <div class="flex items-center gap-1 mb-4">${stars}</div>
@@ -164,12 +160,10 @@ TESTIMONIALS.forEach((t) => {
 });
 
 // About doctor / booking-section reveal (left/right slide-in)
-document.querySelectorAll(".reveal-left, .reveal-right").forEach(observeReveal);
+document.querySelectorAll(".reveal-left, .reveal-right").forEach((el) => revealObserver.observe(el));
 
-// Footer year
 document.getElementById("footer-year").textContent = `© ${new Date().getFullYear()} DermaCare. All rights reserved.`;
 
-// Treatment select options
 const treatmentSelect = document.getElementById("treatment-select");
 TREATMENT_OPTIONS.forEach((o) => {
   const opt = document.createElement("option");
@@ -185,6 +179,7 @@ document.querySelectorAll(".consultation-toggle").forEach((btn) => {
     consultationHidden.value = btn.dataset.consultation;
     document.querySelectorAll(".consultation-toggle").forEach((b) => {
       const active = b === btn;
+      b.setAttribute("aria-pressed", String(active));
       b.className = "consultation-toggle flex items-center justify-center gap-2 h-11 rounded-xl border-2 text-sm font-medium transition-all duration-200 " +
         (active
           ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm"
@@ -193,7 +188,6 @@ document.querySelectorAll(".consultation-toggle").forEach((btn) => {
   });
 });
 
-// Toast
 const toastRoot = document.getElementById("toast-root");
 function showToast(message, type = "success") {
   const el = document.createElement("div");
@@ -242,18 +236,18 @@ bookingForm.addEventListener("submit", async (e) => {
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      // FastAPI: a list of field errors (422), {"msg": ...} (e.g. 429, 503) or a plain string.
       const detail = data.detail;
       const msg = Array.isArray(detail)
         ? detail.map((d) => `${d.loc?.[1] || "Field"}: ${d.msg}`).join(", ")
-        : (detail || "Failed to send request. Please call us directly.");
+        : (detail?.msg || (typeof detail === "string" && detail) || "Failed to send request. Please call us directly.");
       showToast(`Error: ${msg}`, "error");
       return;
     }
     showToast("Your appointment has been booked successfully.", "success");
     bookingForm.reset();
     document.querySelectorAll(".consultation-toggle")[0].click();
-  } catch (err) {
-    console.error(err);
+  } catch {
     showToast("Failed to send request. Please call us directly.", "error");
   } finally {
     bookingSubmit.disabled = false;

@@ -4,9 +4,9 @@ from fastapi import FastAPI, APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 from pymongo.errors import ConnectionFailure
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from app import rate_limit
 from app.database import db, dpms_db
 from app.routes import auth, patients, appointments, medicines
 
@@ -26,8 +26,9 @@ async def lifespan(app: FastAPI):
     try:
         await dpms_db.patients.create_index("patient_id", unique=True)
         await db.users.create_index("username", unique=True)
+        await rate_limit.ensure_indexes()
     except Exception as e:
-        logger.warning(f"Could not create indexes: {e}")
+        logger.warning("Could not create indexes: %s", e)
     yield
 
 app = FastAPI(title="DermaCare API", lifespan=lifespan)
@@ -35,20 +36,15 @@ app = FastAPI(title="DermaCare API", lifespan=lifespan)
 
 @app.exception_handler(ConnectionFailure)
 async def db_unreachable(request: Request, exc: ConnectionFailure):
-    logger.error(f"Database unreachable: {exc}")
+    # The hosting hint goes to the server log only; this response also reaches the public site.
+    logger.error("Database unreachable (with Atlas, check Network Access / IP allowlist): %s", exc)
     return JSONResponse(
         status_code=503,
-        content={"detail": {"msg": "Can't reach the database. Check MongoDB Atlas Network Access (IP allowlist)."}},
+        content={"detail": {"msg": "Can't reach the database right now. Please try again shortly."}},
     )
 
-# CORS config
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "https://dermacare.in"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# No CORS middleware: the site, admin panel and API all share this one origin.
+# If the frontend ever moves to another domain, add CORSMiddleware for that origin.
 
 api_router = APIRouter(prefix="/api")
 
@@ -60,7 +56,6 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
-# Include routers
 api_router.include_router(auth.router, tags=["Auth"])
 api_router.include_router(patients.router, tags=["Patients"])
 api_router.include_router(appointments.router, tags=["Appointments"])
@@ -68,7 +63,6 @@ api_router.include_router(medicines.router, tags=["Medicines"])
 
 app.include_router(api_router)
 
-# Serve the plain HTML/CSS/JS frontend (no separate Node/Vite process needed).
 # Mounted after the API router so /api/* is always matched first.
 app.mount("/admin/assets", StaticFiles(directory=os.path.join(ADMIN_DIR, "assets")), name="admin-assets")
 app.mount("/admin/js", StaticFiles(directory=os.path.join(ADMIN_DIR, "js")), name="admin-js")
@@ -77,8 +71,7 @@ app.mount("/admin/js", StaticFiles(directory=os.path.join(ADMIN_DIR, "js")), nam
 @app.get("/admin")
 @app.get("/admin/{full_path:path}")
 async def serve_admin(full_path: str = ""):
-    # SPA shell fallback so deep links (e.g. /admin/patients/PT-00001) loaded
-    # directly also resolve to the admin app, which does its own client-side routing.
+    # Every /admin/... URL gets the app shell, so deep links work on refresh.
     return FileResponse(os.path.join(ADMIN_DIR, "index.html"))
 
 

@@ -1,8 +1,21 @@
-// Small fetch wrapper for the admin API. Paths include the /api prefix.
+// Callers pass full paths, including the /api prefix.
 
+// FastAPI sends errors in three shapes:
+//   {"detail": "text"}                  HTTPException with a string
+//   {"detail": {"msg": "text", ...}}    HTTPException with extra fields (e.g. duplicate patient)
+//   {"detail": [{"msg": "text", ...}]}  422 validation errors
+function messageFromBody(status, data) {
+  const detail = data && data.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && detail[0]?.msg) return detail.map((d) => d.msg).join("; ");
+  if (detail && typeof detail === "object" && detail.msg) return detail.msg;
+  return `Request failed with status ${status}`;
+}
+
+// err.message is always readable text; err.response keeps the raw status and body.
 export class ApiError extends Error {
   constructor(status, data) {
-    super((data && data.detail) ? (Array.isArray(data.detail) ? JSON.stringify(data.detail) : String(data.detail)) : `Request failed with status ${status}`);
+    super(messageFromBody(status, data));
     this.response = { status, data };
   }
 }

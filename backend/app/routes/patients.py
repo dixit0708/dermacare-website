@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+import re
 import uuid
 from bson import ObjectId
 from pymongo import ReturnDocument
@@ -48,7 +49,8 @@ def _new_visit(visit: dict) -> dict:
     return visit
 
 
-def _clean(doc: dict) -> dict:
+def _with_str_id(doc: dict) -> dict:
+    # ObjectId isn't JSON-serialisable; the panel uses the string form.
     doc["_id"] = str(doc["_id"])
     return doc
 
@@ -60,19 +62,21 @@ async def get_patients(
     whatsapp: Optional[str] = None,
     patient_id: Optional[str] = None,
 ):
+    # Search terms are matched as plain text ("contains"). re.escape stops characters
+    # such as "(" or "+" from being read as regex syntax, which would error or run slowly.
     query = {}
     if patient_type:
         query["patient_type"] = patient_type
     if name:
-        query["full_name"] = {"$regex": name, "$options": "i"}
+        query["full_name"] = {"$regex": re.escape(name), "$options": "i"}
     if whatsapp:
-        query["whatsapp"] = {"$regex": whatsapp}
+        query["whatsapp"] = {"$regex": re.escape(whatsapp)}
     if patient_id:
-        query["patient_id"] = {"$regex": patient_id, "$options": "i"}
+        query["patient_id"] = {"$regex": re.escape(patient_id), "$options": "i"}
 
     patients = []
     async for p in dpms_db.patients.find(query).sort("created_at", -1).limit(100):
-        patients.append(_clean(p))
+        patients.append(_with_str_id(p))
     return {"items": patients}
 
 @router.post("/patients")
@@ -83,51 +87,53 @@ async def create_patient(payload: PatientCreate):
             raise HTTPException(status_code=409, detail={"duplicate": True, "msg": "Patient already exists", "patient_id": existing.get("patient_id", str(existing["_id"]))})
 
     # The registration form also records the first consultation: it becomes visit #1.
-    data = payload.model_dump(exclude=VISIT_FIELDS - {"treatment"})
-    visit = _new_visit(payload.model_dump(include=VISIT_FIELDS))
-    data["patient_id"] = await _next_patient_id()
-    data["created_at"] = datetime.now(timezone.utc).isoformat()
-    data["visits"] = [visit]
-    data["next_visit"] = visit["next_visit"]
+    # The top-level "treatment" is kept as well, as the patient's main treatment.
+    patient = payload.model_dump(exclude=VISIT_FIELDS - {"treatment"})
+    first_visit = _new_visit(payload.model_dump(include=VISIT_FIELDS))
+    patient["patient_id"] = await _next_patient_id()
+    patient["created_at"] = datetime.now(timezone.utc).isoformat()
+    patient["visits"] = [first_visit]
+    patient["next_visit"] = first_visit["next_visit"]
 
-    await dpms_db.patients.insert_one(data)
-    return _clean(data)
+    await dpms_db.patients.insert_one(patient)
+    return _with_str_id(patient)
 
 @router.get("/patients/{pid}")
 async def get_patient(pid: str):
     doc = await dpms_db.patients.find_one(_patient_filter(pid))
     if not doc:
         raise HTTPException(status_code=404, detail="Patient not found")
-    return _clean(doc)
+    return _with_str_id(doc)
 
 @router.put("/patients/{pid}")
 async def update_patient(pid: str, payload: PatientUpdate):
-    fields = payload.model_dump(exclude_unset=True, exclude={"visit"})
-    update_data = {}
-    if fields:
-        update_data["$set"] = fields
+    # Detail edits and a new visit go into one atomic update.
+    detail_changes = payload.model_dump(exclude_unset=True, exclude={"visit"})
+    update = {}
+    if detail_changes:
+        update["$set"] = detail_changes
 
     if payload.visit:
         visit = _new_visit(payload.visit.model_dump())
-        update_data["$push"] = {"visits": visit}
-        update_data.setdefault("$set", {})["next_visit"] = visit["next_visit"]
+        update["$push"] = {"visits": visit}
+        update.setdefault("$set", {})["next_visit"] = visit["next_visit"]
 
-    if not update_data:
+    if not update:
         return {"msg": "Nothing to update"}
 
     doc = await dpms_db.patients.find_one_and_update(
         _patient_filter(pid),
-        update_data,
+        update,
         return_document=ReturnDocument.AFTER,
     )
     if not doc:
         raise HTTPException(status_code=404, detail="Patient not found")
-    return _clean(doc)
+    return _with_str_id(doc)
 
 @router.delete("/patients/{pid}", dependencies=[Depends(require_admin)])
 async def delete_patient(pid: str):
-    result = await dpms_db.patients.delete_one(_patient_filter(pid))
-    if result.deleted_count == 0:
+    deleted = await dpms_db.patients.delete_one(_patient_filter(pid))
+    if deleted.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Patient not found")
     return {"ok": True}
 
@@ -136,7 +142,7 @@ async def update_visit_dispatch(pid: str, payload: VisitDispatchUpdate):
     # visits.$ is the array element matched by "visits.visit_id" in the query.
     query = {**_patient_filter(pid), "visits.visit_id": payload.visit_id}
     update = {"$set": {"visits.$.dispatch_date": payload.dispatch_date, "visits.$.tracking_id": payload.tracking_id}}
-    res = await dpms_db.patients.update_one(query, update)
-    if res.matched_count == 0:
+    updated = await dpms_db.patients.update_one(query, update)
+    if updated.matched_count == 0:
         raise HTTPException(status_code=404, detail="Patient/Visit not found")
     return {"ok": True}

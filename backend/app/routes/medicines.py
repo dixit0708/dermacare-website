@@ -17,30 +17,34 @@ def _object_id(mid: str) -> ObjectId:
 
 @router.get("/medicines")
 async def get_medicines():
-    meds = []
-    async for m in dpms_db.medicines.find():
-        m["_id"] = str(m["_id"])
-        meds.append(m)
-    return {"medicines": meds}
+    medicines = []
+    async for medicine in dpms_db.medicines.find():
+        medicine["_id"] = str(medicine["_id"])
+        medicines.append(medicine)
+    return {"medicines": medicines}
 
 @router.post("/medicines")
 async def create_medicine(payload: MedicineCreate):
-    data = payload.model_dump()
-    res = await dpms_db.medicines.insert_one(data)
-    data["_id"] = str(res.inserted_id)
-    return data
+    medicine = payload.model_dump()
+    inserted = await dpms_db.medicines.insert_one(medicine)
+    medicine["_id"] = str(inserted.inserted_id)
+    return medicine
 
 @router.put("/medicines/{mid}")
 async def update_medicine(mid: str, payload: MedicineUpdate):
     oid = _object_id(mid)
-    data = payload.model_dump(exclude_unset=True)
-    if data:
-        await dpms_db.medicines.update_one({"_id": oid}, {"$set": data})
+    changes = payload.model_dump(exclude_unset=True)
+    if changes:
+        matched = (await dpms_db.medicines.update_one({"_id": oid}, {"$set": changes})).matched_count
+    else:  # nothing to change, but a missing medicine is still a 404
+        matched = await dpms_db.medicines.count_documents({"_id": oid}, limit=1)
+    if not matched:
+        raise HTTPException(status_code=404, detail="Medicine not found")
     return {"ok": True}
 
 @router.delete("/medicines/{mid}")
 async def delete_medicine(mid: str):
-    res = await dpms_db.medicines.delete_one({"_id": _object_id(mid)})
-    if res.deleted_count == 0:
+    deleted = await dpms_db.medicines.delete_one({"_id": _object_id(mid)})
+    if deleted.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Medicine not found")
     return {"ok": True}

@@ -1,34 +1,21 @@
-// Appointments booked through the public website.
+// Bookings from returning patients are linked to their record by the backend
+// (APPOINTMENT_SOURCE.RETURNING_PATIENT) and shown here with a tag.
 
 import api from "../api.js";
 import { navigate } from "../router.js";
 import { esc } from "../escape.js";
+import { toast } from "../toast.js";
+import { formatDate, isDateOnly, statusChipClass } from "../format.js";
+import { APPOINTMENT_STATUS, APPOINTMENT_SOURCE } from "../constants.js";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "";
-  return `${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+// "01 Dec 2026" above "10:30 AM"; a date-only value (the preferred date) has no time line.
+function dateTimeCell(value) {
+  const time = isDateOnly(value) ? "" : `<div class="text-muted" style="font-size:0.75rem;">${formatDate(value, "h:mm A")}</div>`;
+  return `<div>${formatDate(value, "DD MMM YYYY")}</div>${time}`;
 }
 
-function formatTime(dateStr) {
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "";
-  let h = d.getHours();
-  const m = String(d.getMinutes()).padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12;
-  if (h === 0) h = 12;
-  return `${h}:${m} ${ampm}`;
-}
-
-function statusChipClass(status) {
-  if (status === "Completed") return "chip-success";
-  if (status === "Cancelled") return "chip-danger";
-  if (status === "No Show") return "chip-warning";
-  if (status === "Consultation Started") return "chip-primary";
-  return "chip-default";
+function isReturning(appt) {
+  return appt.source === APPOINTMENT_SOURCE.RETURNING_PATIENT && !!appt.patient_id;
 }
 
 export function render(container) {
@@ -63,9 +50,9 @@ export function render(container) {
     const rows = appointments.length === 0
       ? `<tr><td colspan="7" style="text-align:center;padding:32px;color:#64748b;">No website appointments found</td></tr>`
       : appointments.map((appt) => {
-          const dateTimeCell = appt.date_time === "Pending"
+          const appointmentTimeCell = appt.date_time === "Pending"
             ? `<span class="chip chip-warning">Pending</span>`
-            : `<div>${formatDate(appt.date_time)}</div><div class="text-muted" style="font-size:0.75rem;">${formatTime(appt.date_time)}</div>`;
+            : dateTimeCell(appt.date_time);
 
           const typeIsWalkIn = appt.consultation_type === "walk_in";
           const typeChip = typeIsWalkIn
@@ -74,21 +61,19 @@ export function render(container) {
 
           return `
             <tr data-id="${esc(appt._id)}">
-              <td>
-                <div>${formatDate(appt.created_at)}</div>
-                <div class="text-muted" style="font-size:0.75rem;">${formatTime(appt.created_at)}</div>
-              </td>
+              <td>${dateTimeCell(appt.created_at)}</td>
               <td>
                 <div style="font-weight:600;">${esc(appt.patient_name || "Unknown")}</div>
                 <div class="text-muted" style="font-size:0.75rem;">${appt.age ? `${esc(appt.age)}y` : ""} ${appt.gender ? `• ${esc(appt.gender)}` : ""}</div>
+                ${isReturning(appt) ? `<span class="chip chip-primary" style="margin-top:4px;" title="Already registered: opens the patient's record">Returning · ${esc(appt.patient_id)}</span>` : ""}
               </td>
               <td>
                 <div>${esc(appt.phone || "-")}</div>
                 <div class="text-muted" style="font-size:0.75rem;">${esc(appt.email || "-")}</div>
               </td>
-              <td>${dateTimeCell}</td>
+              <td>${appointmentTimeCell}</td>
               <td>${typeChip}</td>
-              <td><span class="chip ${statusChipClass(appt.status)}">${esc(appt.status || "New")}</span></td>
+              <td><span class="chip ${statusChipClass(appt.status)}">${esc(appt.status || APPOINTMENT_STATUS.NEW)}</span></td>
               <td style="text-align:right;">
                 <div class="flex gap-2" style="justify-content:flex-end;">
                   <button type="button" class="btn btn-primary btn-sm wa-start-btn" style="background:linear-gradient(135deg, #3b82f6, #2563eb);">▶ Start</button>
@@ -123,8 +108,8 @@ export function render(container) {
       const id = tr.dataset.id;
       const appt = appointments.find((a) => a._id === id);
       tr.querySelector(".wa-start-btn").addEventListener("click", () => startConsultation(appt));
-      tr.querySelector(".wa-noshow-btn").addEventListener("click", () => updateStatus(id, "No Show"));
-      tr.querySelector(".wa-cancel-btn").addEventListener("click", () => updateStatus(id, "Cancelled"));
+      tr.querySelector(".wa-noshow-btn").addEventListener("click", () => updateStatus(id, APPOINTMENT_STATUS.NO_SHOW));
+      tr.querySelector(".wa-cancel-btn").addEventListener("click", () => updateStatus(id, APPOINTMENT_STATUS.CANCELLED));
     });
   }
 
@@ -132,8 +117,13 @@ export function render(container) {
     loading = true;
     renderTable();
     try {
-      const res = await api.get("/api/appointments", { params: { source: "Website" } });
-      appointments = res.data.items || [];
+      const [newRes, returningRes] = await Promise.all([
+        api.get("/api/appointments", { params: { source: APPOINTMENT_SOURCE.WEBSITE } }),
+        api.get("/api/appointments", { params: { source: APPOINTMENT_SOURCE.RETURNING_PATIENT } }),
+      ]);
+      appointments = [...(newRes.data.items || []), ...(returningRes.data.items || [])]
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      error = null;
     } catch (err) {
       error = "Failed to fetch website appointments";
     } finally {
@@ -148,22 +138,32 @@ export function render(container) {
       appointments = appointments.map((a) => (a._id === id ? { ...a, status } : a));
       renderTable();
     } catch (err) {
-      alert("Failed to update status");
+      toast.error(`Failed to update status: ${err.message}`);
     }
   }
 
   async function startConsultation(appt) {
     try {
-      if (appt.status !== "Consultation Started") {
-        await api.put(`/api/appointments/${appt._id}`, { status: "Consultation Started" });
+      if (appt.status !== APPOINTMENT_STATUS.STARTED) {
+        await api.put(`/api/appointments/${appt._id}`, { status: APPOINTMENT_STATUS.STARTED });
+      }
+      // A returning patient is already registered: open their record with the
+      // new consultation pre-filled, instead of the registration form (which
+      // would reject them as a duplicate).
+      if (isReturning(appt)) {
+        navigate(`/admin/patients/${encodeURIComponent(appt.patient_id)}`, {
+          startConsultation: true,
+          appointment: { ...appt, status: APPOINTMENT_STATUS.STARTED },
+        });
+        return;
       }
       navigate("/admin/", {
         openRegistration: true,
-        mode: appt.consultation_type === "clinic" || appt.consultation_type === "walk_in" ? "offline" : "online",
+        mode: appt.consultation_type === "walk_in" ? "offline" : "online",
         appointment: appt,
       });
     } catch (e) {
-      alert("Failed to start consultation");
+      toast.error(`Failed to start consultation: ${e.message}`);
     }
   }
 

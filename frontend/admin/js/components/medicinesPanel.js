@@ -1,61 +1,38 @@
-// Medicines catalog dialog. A fresh overlay is built every time it opens.
-
 import api from "../api.js";
 import { esc } from "../escape.js";
-
-// FastAPI puts error text under "detail" (a string or {msg}).
-function apiErrorMsg(err, fallback) {
-  const detail = err.response?.data?.detail;
-  if (typeof detail === "string") return detail;
-  return detail?.msg || fallback;
-}
-
-function closeOverlay(overlay) {
-  overlay.remove();
-}
+import { openDialog } from "../dialog.js";
 
 export function openMedicinesPanel() {
   let medicines = [];
   let editingId = null;
 
-  const overlay = document.createElement("div");
-  overlay.className = "dialog-overlay";
-  overlay.innerHTML = `
-    <div class="dialog dialog-lg">
-      <div class="dialog-title">Manage Medicines</div>
-      <div class="dialog-content">
-        <div id="meds-alert"></div>
-        <div class="mb-3">
-          <button type="button" class="btn btn-primary" id="meds-add-btn">Add New Medicine</button>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Medicine Name</th>
-                <th>Price (₹)</th>
-                <th>Description</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="meds-tbody"></tbody>
-          </table>
-        </div>
+  const { overlay, close } = openDialog({
+    title: "Manage Medicines",
+    wide: true,
+    content: `
+      <div id="meds-alert"></div>
+      <div class="mb-3">
+        <button type="button" class="btn btn-primary" id="meds-add-btn">Add New Medicine</button>
       </div>
-      <div class="dialog-actions">
-        <button type="button" class="btn btn-ghost" id="meds-close-btn">Close</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Medicine Name</th>
+              <th>Price (₹)</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="meds-tbody"></tbody>
+        </table>
+      </div>`,
+    actions: `<button type="button" class="btn btn-ghost" id="meds-close-btn">Close</button>`,
+  });
 
   const alertBox = overlay.querySelector("#meds-alert");
   const tbody = overlay.querySelector("#meds-tbody");
-
-  overlay.querySelector("#meds-close-btn").addEventListener("click", () => closeOverlay(overlay));
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeOverlay(overlay);
-  });
+  overlay.querySelector("#meds-close-btn").addEventListener("click", close);
 
   function showAlert(type, msg) {
     alertBox.innerHTML = `<div class="alert alert-${type}">${esc(msg)}</div>`;
@@ -98,43 +75,36 @@ export function openMedicinesPanel() {
     });
   }
 
-  // Add/Edit form dialog (nested)
+  // Opens on top of the catalog dialog; medicine is null when adding.
   function openForm(medicine) {
     editingId = medicine ? medicine._id : null;
     const form = { name: medicine?.name || "", price: medicine?.price ?? "", description: medicine?.description || "" };
 
-    const formOverlay = document.createElement("div");
-    formOverlay.className = "dialog-overlay";
-    formOverlay.style.zIndex = "1001";
-    formOverlay.innerHTML = `
-      <div class="dialog">
-        <div class="dialog-title">${editingId ? "Edit Medicine" : "Add Medicine"}</div>
-        <div class="dialog-content">
-          <div id="meds-form-error"></div>
-          <div class="field">
-            <label class="field-label">Medicine Name</label>
-            <input class="input" id="meds-form-name" value="${esc(form.name)}" autofocus />
-          </div>
-          <div class="field">
-            <label class="field-label">Price (₹)</label>
-            <input class="input" id="meds-form-price" type="number" step="0.01" min="0" value="${esc(form.price)}" />
-          </div>
-          <div class="field">
-            <label class="field-label">Description</label>
-            <textarea class="textarea" id="meds-form-desc" rows="2">${esc(form.description)}</textarea>
-          </div>
+    const { overlay: formOverlay, close: closeForm } = openDialog({
+      title: editingId ? "Edit Medicine" : "Add Medicine",
+      zIndex: 1001, // above the catalog dialog
+      content: `
+        <div id="meds-form-error"></div>
+        <div class="field">
+          <label class="field-label" for="meds-form-name">Medicine Name</label>
+          <input class="input" id="meds-form-name" value="${esc(form.name)}" />
         </div>
-        <div class="dialog-actions">
-          <button type="button" class="btn btn-ghost" id="meds-form-cancel">Cancel</button>
-          <button type="button" class="btn btn-primary" id="meds-form-save">Save</button>
+        <div class="field">
+          <label class="field-label" for="meds-form-price">Price (₹)</label>
+          <input class="input" id="meds-form-price" type="number" step="0.01" min="0" value="${esc(form.price)}" />
         </div>
-      </div>
-    `;
-    document.body.appendChild(formOverlay);
+        <div class="field">
+          <label class="field-label" for="meds-form-desc">Description</label>
+          <textarea class="textarea" id="meds-form-desc" rows="2">${esc(form.description)}</textarea>
+        </div>`,
+      actions: `
+        <button type="button" class="btn btn-ghost" id="meds-form-cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="meds-form-save">Save</button>`,
+    });
+    formOverlay.querySelector("#meds-form-name").focus();
 
     const formError = formOverlay.querySelector("#meds-form-error");
-    formOverlay.querySelector("#meds-form-cancel").addEventListener("click", () => formOverlay.remove());
-    formOverlay.addEventListener("click", (e) => { if (e.target === formOverlay) formOverlay.remove(); });
+    formOverlay.querySelector("#meds-form-cancel").addEventListener("click", closeForm);
 
     const saveBtn = formOverlay.querySelector("#meds-form-save");
     saveBtn.addEventListener("click", async () => {
@@ -157,10 +127,10 @@ export function openMedicinesPanel() {
           await api.post("/api/medicines", { name, price: parseFloat(price), description });
           showAlert("success", "Medicine added successfully");
         }
-        formOverlay.remove();
+        closeForm();
         fetchMedicines();
       } catch (err) {
-        formError.innerHTML = `<div class="alert alert-error">${esc(apiErrorMsg(err, "Failed to save medicine"))}</div>`;
+        formError.innerHTML = `<div class="alert alert-error">${esc(err.message || "Failed to save medicine")}</div>`;
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = "Save";
@@ -175,7 +145,7 @@ export function openMedicinesPanel() {
       showAlert("success", "Medicine deleted successfully");
       fetchMedicines();
     } catch (err) {
-      showAlert("error", apiErrorMsg(err, "Failed to delete medicine"));
+      showAlert("error", err.message || "Failed to delete medicine");
     }
   }
 

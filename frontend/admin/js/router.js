@@ -1,6 +1,7 @@
-// Small History API router for the admin panel, with a login guard.
+// History API router with a login guard.
 
 import { isAuthenticated } from "./auth.js";
+import { closeAllDialogs } from "./dialog.js";
 
 const routes = [];
 
@@ -53,6 +54,7 @@ function handleRoute(state) {
     return;
   }
 
+  closeAllDialogs();
   const container = document.getElementById("app");
   container.innerHTML = "";
   route.render(container, params, state);

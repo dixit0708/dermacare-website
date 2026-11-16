@@ -1,45 +1,59 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from typing import Optional
 from datetime import datetime, timezone
 import re
 from bson import ObjectId
+from pymongo import ReturnDocument
 
+from app import rate_limit
+from app.config import BOOKINGS_PER_IP_PER_HOUR, BOOKINGS_PER_EMAIL_PER_DAY
 from app.database import db, dpms_db
 from app.models import Appointment, AppointmentCreate, AppointmentUpdate, PostVisitNotify
 from app.security import get_current_user
-from app.services.notifications import send_booking_notifications, send_post_visit_notifications
+from app.services.notifications import send_booking_confirmation, send_thank_you_email
 
 
 router = APIRouter()
 
+# Values of dpms.appointments "source". The admin panel filters on the same strings.
+SOURCE_NEW_PATIENT       = "Website"
+SOURCE_RETURNING_PATIENT = "Existing Patient Booking"
+STATUS_STARTED           = "Consultation Started"
+
+
+async def _enforce_booking_limits(request: Request, payload: AppointmentCreate) -> None:
+    # request.client is the real visitor only if uvicorn trusts the reverse proxy
+    # (FORWARDED_ALLOW_IPS); otherwise every visitor shares the proxy's address.
+    ip = request.client.host if request.client else "unknown"
+    limits = [("booking-ip", ip, BOOKINGS_PER_IP_PER_HOUR, 3600)]
+    if payload.email:
+        limits.append(("booking-email", payload.email.lower(), BOOKINGS_PER_EMAIL_PER_DAY, 86400))
+    for scope, identity, limit, window in limits:
+        retry_after = await rate_limit.hit(scope, identity, limit, window)
+        if retry_after:
+            raise HTTPException(
+                status_code=429,
+                detail={"msg": "Too many booking requests. Please try again later or call the clinic."},
+                headers={"Retry-After": str(retry_after)},
+            )
+
+
 # Public: called by the booking form on the website, so no login here.
 @router.post("/appointments", response_model=Appointment)
-async def create_appointment(payload: AppointmentCreate, background_tasks: BackgroundTasks):
-    appt = Appointment(**payload.model_dump())
-    await db.appointments.insert_one(appt.model_dump())
+async def create_appointment(payload: AppointmentCreate, request: Request, background_tasks: BackgroundTasks):
+    await _enforce_booking_limits(request, payload)
 
-    # Mirror to DPMS DB
-    escaped_name    = re.escape(payload.full_name)
-    existing_patient = await dpms_db.patients.find_one({
+    booking = Appointment(**payload.model_dump())
+    await db.appointments.insert_one(booking.model_dump())
+
+    # The clinic's copy in dpms. A returning patient (same WhatsApp number and name)
+    # is linked here, but their record is not changed by this anonymous request.
+    returning_patient = await dpms_db.patients.find_one({
         "whatsapp": payload.phone,
-        "full_name": {"$regex": f"^{escaped_name}$", "$options": "i"},
-    }) if payload.phone and payload.full_name else None
-
-    if existing_patient:
-        patient_id = existing_patient.get("patient_id")
-        source     = "Existing Patient Booking"
-        new_type   = "online" if payload.consultation_type == "online" else "offline"
-        if existing_patient.get("patient_type") != new_type:
-            await dpms_db.patients.update_one(
-                {"_id": existing_patient["_id"]},
-                {"$set": {"patient_type": new_type}},
-            )
-    else:
-        patient_id = ""
-        source     = "Website"
-
-    dpms_appt = {
-        "patient_id":        patient_id,
+        "full_name": {"$regex": f"^{re.escape(payload.full_name)}$", "$options": "i"},
+    })
+    await dpms_db.appointments.insert_one({
+        "patient_id":        returning_patient.get("patient_id") if returning_patient else "",
         "patient_name":      payload.full_name,
         "phone":             payload.phone,
         "email":             payload.email,
@@ -52,35 +66,29 @@ async def create_appointment(payload: AppointmentCreate, background_tasks: Backg
         "treatment":         payload.treatment,
         "message":           payload.message,
         "status":            "New",
-        "source":            source,
+        "source":            SOURCE_RETURNING_PATIENT if returning_patient else SOURCE_NEW_PATIENT,
         "created_at":        datetime.now(timezone.utc),
-    }
-    await dpms_db.appointments.insert_one(dpms_appt)
+    })
 
-    # Confirmation email / SMS go out after the response, so booking isn't slowed down
+    # Sent after the response, so a slow mail server doesn't slow down booking.
     background_tasks.add_task(
-        send_booking_notifications,
-        phone=payload.phone,
+        send_booking_confirmation,
         email=payload.email,
         name=payload.full_name,
+        phone=payload.phone,
         treatment=payload.treatment,
         preferred_date=payload.preferred_date or "",
-        ctype=payload.consultation_type,
-        ref=appt.id,
+        consultation_type=payload.consultation_type,
+        ref=booking.id,
     )
-    return appt
+    return booking
 
 
-# Post-visit notification endpoint
 @router.post("/notify/post-visit", dependencies=[Depends(get_current_user)])
 async def notify_post_visit(payload: PostVisitNotify, background_tasks: BackgroundTasks):
-    """
-    Called by the DPMS frontend after a consultation is saved.
-    Sends a thank-you SMS + email with the next visit date.
-    """
+    """Called by the admin panel after a consultation is saved."""
     background_tasks.add_task(
-        send_post_visit_notifications,
-        phone=payload.phone,
+        send_thank_you_email,
         email=payload.email,
         name=payload.name,
         treatment=payload.treatment,
@@ -89,9 +97,8 @@ async def notify_post_visit(payload: PostVisitNotify, background_tasks: Backgrou
     return {"ok": True, "msg": "Post-visit notification queued"}
 
 
-# DPMS Appointments (read / update from dpms.appointments)
 @router.get("/appointments", dependencies=[Depends(get_current_user)])
-async def get_all_appointments(
+async def list_clinic_appointments(
     source: Optional[str] = None,
     patient_id: Optional[str] = None,
 ):
@@ -101,26 +108,40 @@ async def get_all_appointments(
     if patient_id:
         query["patient_id"] = patient_id
 
-    appts = []
-    async for a in dpms_db.appointments.find(query).sort("created_at", -1).limit(200):
-        a["_id"] = str(a["_id"])
-        appts.append(a)
-    return {"items": appts}
+    appointments = []
+    async for appt in dpms_db.appointments.find(query).sort("created_at", -1).limit(200):
+        appt["_id"] = str(appt["_id"])
+        appointments.append(appt)
+    return {"items": appointments}
+
 
 @router.put("/appointments/{appt_id}", dependencies=[Depends(get_current_user)])
-async def update_dpms_appointment(appt_id: str, payload: AppointmentUpdate):
-    """Update status / linked patient of a DPMS appointment by _id string."""
+async def update_clinic_appointment(appt_id: str, payload: AppointmentUpdate):
     if not ObjectId.is_valid(appt_id):
         raise HTTPException(status_code=400, detail="Invalid appointment id")
 
-    data = payload.model_dump(exclude_unset=True)
-    if not data:
+    changes = payload.model_dump(exclude_unset=True)
+    if not changes:
         return {"ok": True}
 
-    result = await dpms_db.appointments.update_one(
+    before = await dpms_db.appointments.find_one_and_update(
         {"_id": ObjectId(appt_id)},
-        {"$set": data},
+        {"$set": changes},
+        return_document=ReturnDocument.BEFORE,
     )
-    if result.matched_count == 0:
+    if before is None:
         raise HTTPException(status_code=404, detail="Appointment not found")
+
+    # A returning patient's online/clinic type follows their new booking, but only
+    # once a logged-in doctor starts the consultation (never from the public form).
+    # Read from the document *before* this update, so linking a newly registered
+    # patient (source "Website") never overrides the type the doctor chose.
+    if (changes.get("status") == STATUS_STARTED
+            and before.get("source") == SOURCE_RETURNING_PATIENT
+            and before.get("patient_id")):
+        new_type = "online" if before.get("consultation_type") == "online" else "offline"
+        await dpms_db.patients.update_one(
+            {"patient_id": before["patient_id"], "patient_type": {"$ne": new_type}},
+            {"$set": {"patient_type": new_type}},
+        )
     return {"ok": True}

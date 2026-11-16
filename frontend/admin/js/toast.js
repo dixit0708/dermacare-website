@@ -1,5 +1,3 @@
-// Simple success / error toasts in the top-right corner.
-
 function ensureRoot() {
   let root = document.getElementById("toast-root");
   if (!root) {

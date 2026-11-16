@@ -1,4 +1,3 @@
-// Dashboard with the patient registration and patient list tabs.
 // The panel is rebuilt from scratch on every tab or mode switch.
 
 import { render as renderPatientForm } from "../components/patientForm.js";
@@ -117,7 +116,7 @@ export function render(container, params, state) {
         panel.appendChild(heading);
         const host = document.createElement("div");
         panel.appendChild(host);
-        renderPatientForm(host, { mode, prefillData });
+        renderPatientForm(host, { mode, prefillData, onPrefillUsed: () => { prefillData = null; } });
       } else {
         const heading = document.createElement("h3");
         heading.className = "mb-3";

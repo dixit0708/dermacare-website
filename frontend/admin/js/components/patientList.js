@@ -3,11 +3,11 @@
 import api from "../api.js";
 import { navigate } from "../router.js";
 import { esc } from "../escape.js";
+import { toast } from "../toast.js";
 
 export function render(container, { patientType = "offline" } = {}) {
   const isOnline = patientType === "online";
   let patients = [];
-  let loading = false;
 
   const wrap = document.createElement("div");
   wrap.className = "paper";
@@ -45,7 +45,6 @@ export function render(container, { patientType = "offline" } = {}) {
   }
 
   function setLoading(v) {
-    loading = v;
     searchBtn.disabled = v;
     spinnerEl.innerHTML = v ? `<span class="spinner"></span>` : "";
     if (v) {
@@ -66,8 +65,7 @@ export function render(container, { patientType = "offline" } = {}) {
       patients = res.data.items || [];
       renderTable();
     } catch (err) {
-      console.error("Error fetching patients:", err);
-      alert("Failed to fetch patients");
+      toast.error(`Failed to fetch patients: ${err.message}`);
     } finally {
       setLoading(false);
     }

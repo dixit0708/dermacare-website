@@ -1,49 +1,14 @@
-// Login page (Sign In / Doctor Sign Up).
-// Has its own dark styles here instead of using admin.css.
+// Styles are in the "Login page" section of admin.css.
 
-import api from "../api.js";
+import api, { ApiError } from "../api.js";
 import { login } from "../auth.js";
 import { navigate } from "../router.js";
 import { esc } from "../escape.js";
 
-// FastAPI sends errors as {"detail": {"msg": ...}} or {"detail": "..."}
-function errorMessage(err, fallback) {
-  if (!err.response) return "Can't reach the server. Is the backend running?";
-  const data = err.response.data || {};
-  const detail = data.detail;
-  if (detail && typeof detail === "object" && !Array.isArray(detail) && detail.msg) return detail.msg;
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
-  return data.msg || fallback;
+// fetch() itself throws (not an ApiError) when the server can't be reached.
+function errorMessage(err) {
+  return err instanceof ApiError ? err.message : "Can't reach the server. Is the backend running?";
 }
-
-const STYLE = `
-.login-page { min-height: 100vh; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.login-wrap { width: 100%; max-width: 420px; }
-.login-logo-box { text-align: center; margin-bottom: 32px; }
-.login-logo-card { background: #fff; border-radius: 12px; padding: 16px 24px; display: inline-block; margin-bottom: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-.login-logo-card img { width: 220px; object-fit: contain; display: block; }
-.login-logo-caption { color: #64748b; font-size: 12px; }
-.login-card { border-radius: 12px; background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.4); overflow: hidden; }
-.login-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.login-tab { flex: 1; padding: 14px; background: none; border: none; border-bottom: 3px solid transparent; color: #94a3b8; font-weight: 500; font-size: 0.95rem; font-family: inherit; cursor: pointer; }
-.login-tab.active { color: #fff; font-weight: 700; border-bottom-color: #6366F1; }
-.login-body { padding: 32px; }
-.login-title { font-weight: 700; color: #fff; margin-bottom: 4px; font-size: 1.25rem; }
-.login-subtitle { color: #94a3b8; margin-bottom: 24px; font-size: 0.875rem; }
-.login-field { margin: 16px 0; }
-.login-field label { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 6px; }
-.login-input-wrap { position: relative; display: flex; align-items: center; }
-.login-input-wrap .login-icon-start { position: absolute; left: 12px; color: #6366F1; font-size: 16px; pointer-events: none; }
-.login-input-wrap .login-icon-end { position: absolute; right: 10px; color: #64748b; font-size: 16px; background: none; border: none; cursor: pointer; padding: 4px; line-height: 1; }
-.login-input-wrap input { width: 100%; box-sizing: border-box; padding: 10px 12px 10px 36px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #fff; font-size: 0.9rem; font-family: inherit; }
-.login-input-wrap input:focus { outline: none; border-color: #6366F1; }
-.login-alert { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 0.85rem; }
-.login-alert-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
-.login-alert-success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
-.login-submit { width: 100%; margin-top: 24px; padding: 12px; font-weight: 700; font-size: 1rem; border-radius: 8px; border: none; color: #fff; cursor: pointer; background: linear-gradient(135deg, #6366F1 0%, #4f46e5 100%); box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
-.login-submit:hover { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); }
-`;
 
 function field({ id, label, type = "text", icon, toggle = false }) {
   return `
@@ -59,10 +24,6 @@ function field({ id, label, type = "text", icon, toggle = false }) {
 }
 
 export function render(container) {
-  const style = document.createElement("style");
-  style.textContent = STYLE;
-  container.appendChild(style);
-
   const page = document.createElement("div");
   page.className = "login-page";
   page.innerHTML = `
@@ -100,7 +61,6 @@ export function render(container) {
               ${field({ id: "su-username", label: "Username", icon: "\u{1F464}" })}
               ${field({ id: "su-password", label: "Password", type: "password", icon: "\u{1F512}", toggle: true })}
               ${field({ id: "su-confirm", label: "Confirm Password", type: "password", icon: "\u{1F512}" })}
-              ${field({ id: "su-code", label: "Clinic Signup Code", type: "password", icon: "\u{1F511}" })}
               <div id="signup-error"></div>
               <div id="signup-success"></div>
               <button type="submit" class="login-submit">Create Doctor Account</button>
@@ -112,7 +72,6 @@ export function render(container) {
   `;
   container.appendChild(page);
 
-  // Tabs
   const tabs = page.querySelectorAll(".login-tab");
   const panelSignin = page.querySelector("#panel-signin");
   const panelSignup = page.querySelector("#panel-signup");
@@ -133,7 +92,6 @@ export function render(container) {
     });
   });
 
-  // Password visibility toggles
   page.querySelectorAll("[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const input = page.querySelector(`#${btn.dataset.toggle}`);
@@ -142,7 +100,6 @@ export function render(container) {
     });
   });
 
-  // Sign In submit
   page.querySelector("#signin-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     signinError.innerHTML = "";
@@ -153,12 +110,11 @@ export function render(container) {
       login(res.data.access_token);
       navigate("/admin/");
     } catch (err) {
-      const msg = errorMessage(err, "Login failed");
+      const msg = errorMessage(err);
       signinError.innerHTML = `<div class="login-alert login-alert-error">${esc(msg)}</div>`;
     }
   });
 
-  // Doctor Sign Up submit
   page.querySelector("#signup-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     signupError.innerHTML = "";
@@ -167,7 +123,6 @@ export function render(container) {
     const regUsername = page.querySelector("#su-username").value;
     const regPassword = page.querySelector("#su-password").value;
     const regConfirm = page.querySelector("#su-confirm").value;
-    const regCode = page.querySelector("#su-code").value;
 
     if (regPassword !== regConfirm) {
       signupError.innerHTML = `<div class="login-alert login-alert-error">Passwords do not match</div>`;
@@ -183,12 +138,11 @@ export function render(container) {
         username: regUsername,
         password: regPassword,
         full_name: regName,
-        signup_code: regCode,
       });
       signupSuccess.innerHTML = `<div class="login-alert login-alert-success">Account created successfully! You can now sign in.</div>`;
       page.querySelector("#signup-form").reset();
     } catch (err) {
-      const msg = errorMessage(err, "Registration failed");
+      const msg = errorMessage(err);
       signupError.innerHTML = `<div class="login-alert login-alert-error">${esc(msg)}</div>`;
     }
   });

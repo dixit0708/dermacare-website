@@ -1,14 +1,17 @@
-// withSidebar(viewRender) wraps a view's render function in the sidebar layout.
-
 import { logout } from "../auth.js";
 import { navigate } from "../router.js";
 import { openMedicinesPanel } from "./medicinesPanel.js";
 
-function icon(svg) {
-  const span = document.createElement("span");
-  span.className = "drawer-icon";
-  span.innerHTML = svg;
-  return span;
+// One sidebar button. `icon` is trusted markup from ICONS (or an emoji).
+function drawerItem({ label, icon, onClick, active = false, extraClass = "" }) {
+  const btn = document.createElement("button");
+  btn.className = ["drawer-item", active && "active", extraClass].filter(Boolean).join(" ");
+  const iconEl = document.createElement("span");
+  iconEl.className = "drawer-icon";
+  iconEl.innerHTML = icon;
+  btn.append(iconEl, document.createTextNode(label));
+  btn.addEventListener("click", onClick);
+  return btn;
 }
 
 const ICONS = {
@@ -30,60 +33,32 @@ function buildDrawer(pathname) {
     <div class="drawer-section-label">Clinic</div>
   `;
 
-  const list1 = document.createElement("div");
-  list1.className = "drawer-list";
+  const clinicList = document.createElement("div");
+  clinicList.className = "drawer-list";
+  clinicList.append(
+    drawerItem({ label: "Dashboard", icon: ICONS.dashboard, active: pathname === "/admin/" || pathname === "/admin",
+                 onClick: () => navigate("/admin/") }),
+    drawerItem({ label: "Website Appointments", icon: "\u{1F310}", active: pathname === "/admin/website-appointments",
+                 onClick: () => navigate("/admin/website-appointments") }),
+  );
 
-  const dashBtn = document.createElement("button");
-  dashBtn.className = "drawer-item" + (pathname === "/admin/" || pathname === "/admin" ? " active" : "");
-  dashBtn.appendChild(icon(ICONS.dashboard));
-  dashBtn.appendChild(document.createTextNode("Dashboard"));
-  dashBtn.addEventListener("click", () => navigate("/admin/"));
-  list1.appendChild(dashBtn);
-
-  const websiteBtn = document.createElement("button");
-  websiteBtn.className = "drawer-item" + (pathname === "/admin/website-appointments" ? " active" : "");
-  const globeIcon = document.createElement("span");
-  globeIcon.className = "drawer-icon";
-  globeIcon.textContent = "\u{1F310}";
-  websiteBtn.appendChild(globeIcon);
-  websiteBtn.appendChild(document.createTextNode("Website Appointments"));
-  websiteBtn.addEventListener("click", () => navigate("/admin/website-appointments"));
-  list1.appendChild(websiteBtn);
-
-  drawer.appendChild(list1);
-
-  const hr2 = document.createElement("hr");
-  hr2.className = "drawer-divider";
-  drawer.appendChild(hr2);
-
+  const divider = document.createElement("hr");
+  divider.className = "drawer-divider";
   const resourcesLabel = document.createElement("div");
   resourcesLabel.className = "drawer-section-label";
   resourcesLabel.textContent = "Resources";
-  drawer.appendChild(resourcesLabel);
-
-  const list2 = document.createElement("div");
-  list2.className = "drawer-list";
-  const medsBtn = document.createElement("button");
-  medsBtn.className = "drawer-item";
-  medsBtn.appendChild(icon(ICONS.medication));
-  medsBtn.appendChild(document.createTextNode("Medicines"));
-  medsBtn.addEventListener("click", () => openMedicinesPanel());
-  list2.appendChild(medsBtn);
-  drawer.appendChild(list2);
+  const resourcesList = document.createElement("div");
+  resourcesList.className = "drawer-list";
+  resourcesList.append(drawerItem({ label: "Medicines", icon: ICONS.medication, onClick: () => openMedicinesPanel() }));
 
   const footer = document.createElement("div");
   footer.className = "drawer-footer";
-  const logoutBtn = document.createElement("button");
-  logoutBtn.className = "drawer-item logout";
-  logoutBtn.appendChild(icon(ICONS.logout));
-  logoutBtn.appendChild(document.createTextNode("Logout"));
-  logoutBtn.addEventListener("click", () => {
+  footer.append(drawerItem({ label: "Logout", icon: ICONS.logout, extraClass: "logout", onClick: () => {
     logout();
     navigate("/admin/login");
-  });
-  footer.appendChild(logoutBtn);
-  drawer.appendChild(footer);
+  } }));
 
+  drawer.append(clinicList, divider, resourcesLabel, resourcesList, footer);
   return drawer;
 }
 

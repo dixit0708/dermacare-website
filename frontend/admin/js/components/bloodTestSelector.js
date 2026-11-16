@@ -1,5 +1,7 @@
 // Blood test picker. Calls onChange(selectedTests) whenever the selection changes.
 
+import { esc } from "../escape.js";
+
 export const BLOOD_TEST_CATEGORIES = [
   {
     category: 'Hormonal Profile',
@@ -110,10 +112,6 @@ export const BLOOD_TEST_CATEGORIES = [
     ]
   },
 ];
-
-function esc(v) {
-  return v == null ? '' : String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
 
 export function render(container, initialSelected = [], onChange) {
   let selectedTests = [...initialSelected];

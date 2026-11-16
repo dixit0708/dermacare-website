@@ -1,24 +1,22 @@
 from fastapi import APIRouter, HTTPException
 import bcrypt
-import hmac
 import jwt
 from datetime import datetime, timezone, timedelta
 import uuid
 
 from app.database import db
-from app.config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_HOURS, SIGNUP_CODE
-from app.models import UserRegister, UserLogin
+from app.config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_HOURS
+from app.models import BCRYPT_MAX_BYTES, UserRegister, UserLogin
 
 router = APIRouter()
 
+# Hash of a random value nobody knows, same cost factor as real password hashes.
+_DUMMY_HASH = bcrypt.hashpw(uuid.uuid4().bytes, bcrypt.gensalt()).decode()
+
 @router.post("/auth/register")
 async def register(payload: UserRegister):
-    if not SIGNUP_CODE:
-        raise HTTPException(status_code=403, detail={"msg": "Sign-up is closed. Ask the clinic admin to create your account."})
-    # compare_digest avoids leaking how many characters matched through response timing
-    if not hmac.compare_digest(payload.signup_code, SIGNUP_CODE):
-        raise HTTPException(status_code=403, detail={"msg": "Invalid clinic signup code"})
-
+    # Open sign-up: anyone who reaches the admin page can create a Doctor account.
+    # The role is always Doctor; only an Admin can delete patients.
     existing = await db.users.find_one({"username": payload.username})
     if existing:
         raise HTTPException(status_code=409, detail={"msg": "Username already taken"})
@@ -40,11 +38,20 @@ async def register(payload: UserRegister):
 
 @router.post("/auth/login")
 async def login(payload: UserLogin):
+    invalid = HTTPException(status_code=401, detail={"msg": "Invalid username or password"})
+    password = payload.password.encode()
+    # No account can have a longer password (registration rejects it), and
+    # bcrypt 5 raises instead of returning False, so reject it here.
+    if len(password) > BCRYPT_MAX_BYTES:
+        raise invalid
+
     user = await db.users.find_one({"username": payload.username})
-    if not user or not user.get("password_hash"):
-        raise HTTPException(status_code=401, detail={"msg": "Invalid username or password"})
-    if not bcrypt.checkpw(payload.password.encode(), user["password_hash"].encode()):
-        raise HTTPException(status_code=401, detail={"msg": "Invalid username or password"})
+    # Unknown usernames are checked against a dummy hash, so the response takes the
+    # same time either way and can't be used to discover which usernames exist.
+    stored_hash = user.get("password_hash") if user else None
+    password_ok = bcrypt.checkpw(password, (stored_hash or _DUMMY_HASH).encode())
+    if not stored_hash or not password_ok:
+        raise invalid
 
     token_data = {
         "sub": user["id"],
